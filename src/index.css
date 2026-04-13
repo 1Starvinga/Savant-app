@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: #0D0D0D;
+    color: #FFFFFF;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-card border border-border p-4;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-black font-semibold rounded-xl px-6 py-3 active:scale-95 transition-transform;
+  }
+
+  .btn-outline {
+    @apply border border-gold text-gold font-semibold rounded-xl px-6 py-3 active:scale-95 transition-transform;
+  }
+
+  .tab-bar {
+    @apply fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex items-center justify-around;
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  .page-container {
+    @apply h-full overflow-y-auto;
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    padding-top: env(safe-area-inset-top);
+  }
+}

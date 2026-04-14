@@ -47,4 +47,7 @@
     padding-bottom: calc(4rem + env(safe-area-inset-bottom));
     padding-top: env(safe-area-inset-top);
   }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }

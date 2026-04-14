@@ -1,4 +1,27 @@
+import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+
 export default function Profile() {
+  const { user, signOut } = useAuth()
+  const [signingOut, setSigningOut] = useState(false)
+
+  const displayName = user?.user_metadata?.full_name || user?.email || 'Practitioner'
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    try {
+      await signOut()
+    } catch {
+      setSigningOut(false)
+    }
+  }
+
   return (
     <div className="page-container">
       <div className="px-4 pt-8">
@@ -8,14 +31,14 @@ export default function Profile() {
         {/* Practitioner card */}
         <div className="card flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            <span className="text-gold text-lg font-bold">{initials}</span>
           </div>
           <div>
-            <p className="font-semibold text-white">Practitioner Name</p>
-            <p className="text-xs text-gold mt-0.5">Savant Certified · Level 1</p>
+            <p className="font-semibold text-white">{displayName}</p>
+            <p className="text-xs text-gold mt-0.5">Savant Certified · Practitioner</p>
+            {user?.email && displayName !== user.email && (
+              <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
+            )}
           </div>
         </div>
 
@@ -31,7 +54,13 @@ export default function Profile() {
           ))}
         </div>
 
-        <button className="btn-outline w-full mt-8">Sign Out</button>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="btn-outline w-full mt-8 disabled:opacity-50"
+        >
+          {signingOut ? 'Signing out…' : 'Sign Out'}
+        </button>
       </div>
     </div>
   )

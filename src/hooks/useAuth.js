@@ -138,13 +138,20 @@ export function useAuth() {
     return data
   }, [])
 
-  const signOut = useCallback(() => {
-    // Clear state immediately so the UI transitions to the login screen right away.
-    // Don't await the Supabase call — it can hang on slow networks and freeze the UI.
-    setUser(null)
-    setSession(null)
-    setProfile(null)
-    supabase.auth.signOut().catch(() => {})
+  const signOut = useCallback(async () => {
+    // 'local' scope wipes the session from localStorage instantly without a network
+    // call, so onAuthStateChange fires immediately and there's nothing to hang on.
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // If the supabase call somehow fails, manually purge any sb-* keys so the
+      // session is definitely gone before we redirect.
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('sb-'))
+        .forEach(k => localStorage.removeItem(k))
+    }
+    // Hard redirect — reloads the app with no session, guaranteed login screen.
+    window.location.replace('/')
   }, [])
 
   return { user, session, profile, loading, signIn, signOut, signUp }

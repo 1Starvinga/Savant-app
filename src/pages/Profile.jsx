@@ -13,9 +13,12 @@ export default function Profile() {
     .join('')
     .toUpperCase()
 
-  function handleSignOut() {
+  async function handleSignOut() {
     setSigningOut(true)
-    signOut()
+    await signOut()
+    // signOut does a hard redirect, so this line is never reached —
+    // but if it ever is, reset the button state.
+    setSigningOut(false)
   }
 
   return (

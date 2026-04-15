@@ -236,7 +236,8 @@ export default function Library() {
       .from('stretches')
       .select('id, name, body_region, primary_muscles, setup_execution, narrative, anchor_principles')
       .order('id')
-      .then(({ data, error: err }) => {
+      .then(({ data, error: err, status, statusText }) => {
+        console.log('[Library] Supabase response →', { status, statusText, rowCount: data?.length ?? 0, data, error: err })
         if (err) setError(err.message)
         else     setStretches(data ?? [])
         setLoading(false)

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import heroImg from '../assets/hero.jpg'
 
 export default function Home() {
   const navigate          = useNavigate()
@@ -81,7 +82,25 @@ export default function Home() {
 
   return (
     <div className="page-container">
-      <div className="px-4 pt-8 pb-4">
+
+      {/* Hero image — full-width, top ~third of screen */}
+      <div className="relative w-full h-[33vh] flex-none">
+        <img
+          src={heroImg}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        {/* Gradient: slight scrim at top for legibility → transparent mid → solid background at bottom */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(13,13,13,0) 40%, #0D0D0D 100%)',
+          }}
+        />
+      </div>
+
+      <div className="px-4 pb-4">
 
         {/* Saved message toast */}
         {savedMessage ? (

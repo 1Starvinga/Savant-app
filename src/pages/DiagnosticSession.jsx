@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { stretchLibrary } from '../data/stretchLibrary'
 
 // ─── Phase & Sequence Definitions ────────────────────────────
+// Numbers in each phase's stretches array correspond to stretch_number in Supabase
 
 const PHASES = [
   { id: 1, label: 'Supine — Right Leg', position: 'Supine', side: 'right', stretches: [1,2,3,4,6] },
@@ -18,7 +18,6 @@ const PHASES = [
   { id: 9, label: 'Finish',             position: 'Supine', side: null,    stretches: [22,23,24,7,8] },
 ]
 
-// Transition shown after the named phase (keyed by phase id)
 const TRANSITION_AFTER = {
   2: { instruction: 'Have client flip to prone position',      nextLabel: 'Prone — Right Leg' },
   4: { instruction: 'Move to upper body — client stays prone', nextLabel: 'Prone — Right Arm' },
@@ -26,12 +25,11 @@ const TRANSITION_AFTER = {
   8: { instruction: 'Final stretches — client stays supine',   nextLabel: 'Finish' },
 }
 
-// Flat sequence of every step: either a stretch step or a transition step
 const SEQUENCE = (() => {
   const steps = []
   PHASES.forEach(phase => {
-    phase.stretches.forEach(stretchId => {
-      steps.push({ type: 'stretch', phase, stretchId })
+    phase.stretches.forEach(stretchNum => {
+      steps.push({ type: 'stretch', phase, stretchNum })
     })
     const tr = TRANSITION_AFTER[phase.id]
     if (tr) steps.push({ type: 'transition', phase, ...tr })
@@ -39,18 +37,26 @@ const SEQUENCE = (() => {
   return steps
 })()
 // SEQUENCE.length === 47  (43 stretch steps + 4 transition steps)
-const TOTAL_STEPS    = SEQUENCE.length
+const TOTAL_STEPS     = SEQUENCE.length
 const TOTAL_STRETCHES = SEQUENCE.filter(s => s.type === 'stretch').length // 43
 
-// Cumulative stretch count at each step index (for "Stretch N of 43" display)
+// Cumulative stretch count at each step index (for "N / 43" display)
 const STRETCH_NUM_AT = SEQUENCE.map((_, idx) =>
   SEQUENCE.slice(0, idx + 1).filter(s => s.type === 'stretch').length
 )
 
-// O(1) stretch lookup by id
-const STRETCH_BY_ID = Object.fromEntries(stretchLibrary.map(s => [s.id, s]))
+// ─── Helpers ──────────────────────────────────────────────────
 
-// ─── ROM constants ────────────────────────────────────────────
+// Handles both PostgreSQL array (JS array) and comma-separated string
+function toList(val) {
+  if (Array.isArray(val)) return val.filter(Boolean)
+  if (typeof val === 'string' && val.trim()) {
+    return val.split(',').map(s => s.trim()).filter(Boolean)
+  }
+  return []
+}
+
+// ─── ROM / side constants ─────────────────────────────────────
 
 const ROM_OPTIONS = [
   {
@@ -80,27 +86,29 @@ const ROM_LABEL = {
 }
 
 const SIDE_STYLE = {
-  right: { pill: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',      label: 'Right Side' },
+  right: { pill: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',       label: 'Right Side' },
   left:  { pill: 'bg-violet-500/10 text-violet-400 border border-violet-500/20', label: 'Left Side'  },
 }
 
 const EMPTY_SIDE = { rom: null, painPresent: null, compensation: '', notes: '' }
 
-function initFindings() {
+// ─── Findings helpers (keyed by stretch_number) ───────────────
+
+function initFindings(stretches) {
   const f = {}
-  stretchLibrary.forEach(s => {
-    f[s.id] = { left: { ...EMPTY_SIDE }, right: { ...EMPTY_SIDE } }
+  stretches.forEach(s => {
+    f[s.stretch_number] = { left: { ...EMPTY_SIDE }, right: { ...EMPTY_SIDE } }
   })
   return f
 }
 
-function normalizeFindings(raw) {
-  const base = initFindings()
+function normalizeFindings(raw, stretches) {
+  const base = initFindings(stretches)
   if (!raw || typeof raw !== 'object') return base
   Object.keys(raw).forEach(key => {
-    const id = parseInt(key, 10)
-    if (base[id] && raw[key]) {
-      base[id] = {
+    const num = parseInt(key, 10)
+    if (base[num] && raw[key]) {
+      base[num] = {
         left:  { ...EMPTY_SIDE, ...raw[key].left },
         right: { ...EMPTY_SIDE, ...raw[key].right },
       }
@@ -109,7 +117,7 @@ function normalizeFindings(raw) {
   return base
 }
 
-// ─── ROM badge helper (shared by StretchScreen & SummaryScreen) ─
+// ─── ROM badge helper ─────────────────────────────────────────
 
 function romBadgeClass(rom) {
   if (rom === 'normal')              return 'bg-emerald-500/15 text-emerald-400'
@@ -120,7 +128,7 @@ function romBadgeClass(rom) {
 
 // ─── Setup Screen ─────────────────────────────────────────────
 
-function SetupScreen({ onBegin, preselectedClient }) {
+function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
   const [clients, setClients]   = useState([])
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState(preselectedClient ?? null)
@@ -137,6 +145,8 @@ function SetupScreen({ onBegin, preselectedClient }) {
       .order('first_name')
       .then(({ data }) => { setClients(data ?? []); setLoading(false) })
   }, [profile?.id])
+
+  const canBegin = !!selected && !stretchesLoading
 
   return (
     <div className="page-container bg-background">
@@ -204,11 +214,11 @@ function SetupScreen({ onBegin, preselectedClient }) {
         </div>
 
         <button
-          onClick={() => selected && onBegin(selected)}
-          disabled={!selected}
+          onClick={() => canBegin && onBegin(selected)}
+          disabled={!canBegin}
           className="btn-gold w-full disabled:opacity-30 disabled:scale-100 mt-6"
         >
-          Begin Assessment
+          {stretchesLoading ? 'Loading…' : 'Begin Assessment'}
         </button>
       </div>
     </div>
@@ -252,7 +262,6 @@ function TransitionScreen({ step, stepIdx, onReady, onBack, onExit }) {
 
       {/* Body */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        {/* Phase complete badge */}
         <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4ABA8A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"/>
@@ -262,21 +271,17 @@ function TransitionScreen({ step, stepIdx, onReady, onBack, onExit }) {
         <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400 mb-1">Phase Complete</p>
         <p className="text-lg font-bold text-white mb-8">{step.phase.label}</p>
 
-        {/* Divider */}
         <div className="w-12 h-px bg-border mb-8" />
 
-        {/* Instruction */}
         <p className="text-[10px] font-semibold uppercase tracking-widest text-gold mb-3">Position Change</p>
         <p className="text-base font-semibold text-white leading-snug mb-6">{step.instruction}</p>
 
-        {/* Next up */}
         <div className="w-full max-w-xs bg-surface border border-border rounded-2xl px-5 py-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1">Coming Up</p>
           <p className="text-sm font-bold text-white">{step.nextLabel}</p>
         </div>
       </div>
 
-      {/* Ready button */}
       <div
         className="flex-none px-4 py-3"
         style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
@@ -358,42 +363,45 @@ function FindingForm({ finding, onChange }) {
 
 // ─── Stretch Screen ───────────────────────────────────────────
 
-function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBack, onExit, saveStatus }) {
+function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBack, onExit, saveStatus, stretchByNum }) {
   const [showHowTo, setShowHowTo] = useState(false)
 
-  const { phase, stretchId } = step
-  const stretch   = STRETCH_BY_ID[stretchId]
-  const storeSide = phase.side ?? 'left'   // Finish phase (null) stores in 'left'
-  const finding   = findings[stretchId]?.[storeSide] ?? { ...EMPTY_SIDE }
-  const isFirst   = stepIdx === 0
-  const isLast    = stepIdx === TOTAL_STEPS - 1
-  const progress  = ((stepIdx + 1) / TOTAL_STEPS) * 100
-  const stretchNum = STRETCH_NUM_AT[stepIdx]
+  const { phase, stretchNum } = step
+  const stretch    = stretchByNum[stretchNum]
+  const storeSide  = phase.side ?? 'left'   // Finish phase (null) stores in 'left'
+  const finding    = findings[stretchNum]?.[storeSide] ?? { ...EMPTY_SIDE }
+  const isFirst    = stepIdx === 0
+  const isLast     = stepIdx === TOTAL_STEPS - 1
+  const progress   = ((stepIdx + 1) / TOTAL_STEPS) * 100
+  const stretchNum_ = STRETCH_NUM_AT[stepIdx]
 
   // Collapse how-to when stretch changes
-  useEffect(() => { setShowHowTo(false) }, [stretchId])
+  useEffect(() => { setShowHowTo(false) }, [stretchNum])
 
   function updateFinding(field, value) {
     setFindings(prev => ({
       ...prev,
-      [stretchId]: {
-        ...prev[stretchId],
-        [storeSide]: { ...prev[stretchId][storeSide], [field]: value },
+      [stretchNum]: {
+        ...prev[stretchNum],
+        [storeSide]: { ...prev[stretchNum][storeSide], [field]: value },
       },
     }))
   }
 
   // For left-side phases: show the right-side result recorded earlier
-  const oppositeFinding = phase.side === 'left' ? findings[stretchId]?.right : null
+  const oppositeFinding   = phase.side === 'left' ? findings[stretchNum]?.right : null
   const showOppositeRecap = oppositeFinding?.rom !== null
 
   // Next button label
-  const nextStep = SEQUENCE[stepIdx + 1]
+  const nextStep  = SEQUENCE[stepIdx + 1]
   const nextLabel = isLast
     ? 'Complete ✓'
     : nextStep?.type === 'transition'
       ? 'Next Phase →'
       : 'Next →'
+
+  // setup_execution can be an array or comma-separated string
+  const howToSteps = toList(stretch?.setup_execution ?? [])
 
   return (
     <div className="fixed inset-0 z-10 bg-background flex flex-col">
@@ -410,13 +418,12 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
 
       {/* Header */}
       <div className="flex-none bg-surface border-b border-border px-4 pt-2 pb-3">
-        {/* Phase label row */}
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-gold">
             {phase.label}
           </p>
           <div className="flex items-center gap-2">
-            <p className="text-[10px] text-gray-500">{stretchNum} / {TOTAL_STRETCHES}</p>
+            <p className="text-[10px] text-gray-500">{stretchNum_} / {TOTAL_STRETCHES}</p>
             <button
               onClick={onExit}
               className="w-7 h-7 rounded-full flex items-center justify-center border border-border active:scale-90 transition-transform"
@@ -429,17 +436,18 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
           </div>
         </div>
 
-        {/* Stretch name row */}
         <div className="flex items-start gap-2">
           <span className="text-2xl font-bold text-gold leading-none flex-none mt-0.5">
-            {String(stretchId).padStart(2, '0')}
+            {String(stretchNum).padStart(2, '0')}
           </span>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-white leading-tight">{stretch.name}</h2>
+            <h2 className="text-lg font-bold text-white leading-tight">{stretch?.name}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gold/10 text-gold">
-                {stretch.region}
-              </span>
+              {stretch?.body_region && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gold/10 text-gold">
+                  {stretch.body_region}
+                </span>
+              )}
               {phase.side && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SIDE_STYLE[phase.side].pill}`}>
                   {SIDE_STYLE[phase.side].label}
@@ -454,16 +462,16 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-5 space-y-5">
 
-          {/* Purpose — only on right-side or no-side phases (first encounter) */}
-          {phase.side !== 'left' && (
+          {/* Narrative — only on right-side or no-side phases (first encounter) */}
+          {phase.side !== 'left' && stretch?.narrative && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-1.5">Purpose</p>
-              <p className="text-sm text-gray-300 leading-relaxed">{stretch.purpose}</p>
+              <p className="text-sm text-gray-300 leading-relaxed">{stretch.narrative}</p>
             </div>
           )}
 
           {/* How to Perform — collapsible, only on right-side or no-side phases */}
-          {phase.side !== 'left' && (
+          {phase.side !== 'left' && howToSteps.length > 0 && (
             <div>
               <button
                 onClick={() => setShowHowTo(v => !v)}
@@ -480,7 +488,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
               </button>
               {showHowTo && (
                 <ol className="mt-2 space-y-2">
-                  {stretch.howTo.map((s, i) => (
+                  {howToSteps.map((s, i) => (
                     <li key={i} className="flex gap-3 text-sm text-gray-300 leading-relaxed">
                       <span className="flex-none w-5 h-5 rounded-full bg-gold/15 text-gold text-[10px] font-bold flex items-center justify-center mt-0.5">
                         {i + 1}
@@ -515,7 +523,6 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
 
           <div className="h-px bg-border" />
 
-          {/* Findings */}
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">Findings</p>
             <FindingForm finding={finding} onChange={updateFinding} />
@@ -552,7 +559,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
 
 // ─── Summary Screen ───────────────────────────────────────────
 
-function SummaryScreen({ findings, client, onSave, onBack, saving }) {
+function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
   })
@@ -561,8 +568,9 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
   let totalAssessed = 0
   let painCount = 0
 
-  stretchLibrary.forEach(stretch => {
-    const f = findings[stretch.id]
+  stretches.forEach(stretch => {
+    const f = findings[stretch.stretch_number]
+    if (!f) return
     ;['left', 'right'].forEach(side => {
       const entry = f[side]
       if (entry.rom !== null) {
@@ -575,9 +583,9 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
     })
   })
 
-  const assessedStretches = stretchLibrary.filter(s => {
-    const f = findings[s.id]
-    return f.left.rom !== null || f.right.rom !== null
+  const assessedStretches = stretches.filter(s => {
+    const f = findings[s.stretch_number]
+    return f && (f.left.rom !== null || f.right.rom !== null)
   })
 
   return (
@@ -633,9 +641,9 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
               </p>
               <div className="space-y-2">
                 {restrictions.map(({ stretch, side, entry }) => (
-                  <div key={`${stretch.id}-${side}`} className="card flex items-start gap-3 py-3">
+                  <div key={`${stretch.stretch_number}-${side}`} className="card flex items-start gap-3 py-3">
                     <span className="text-sm font-bold text-gold w-7 flex-none">
-                      {String(stretch.id).padStart(2, '0')}
+                      {String(stretch.stretch_number).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -666,15 +674,15 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
             </p>
             <div className="space-y-2">
               {assessedStretches.map(stretch => {
-                const f = findings[stretch.id]
+                const f = findings[stretch.stretch_number]
                 return (
-                  <div key={stretch.id} className="card py-3">
+                  <div key={stretch.stretch_number} className="card py-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs font-bold text-gold w-6">
-                        {String(stretch.id).padStart(2, '0')}
+                        {String(stretch.stretch_number).padStart(2, '0')}
                       </span>
                       <p className="text-sm font-medium text-white flex-1">{stretch.name}</p>
-                      <span className="text-[10px] text-gray-600">{stretch.region}</span>
+                      <span className="text-[10px] text-gray-600">{stretch.body_region}</span>
                     </div>
                     <div className="flex gap-4 ml-8">
                       {(['left', 'right']).map(side => {
@@ -733,34 +741,62 @@ export default function DiagnosticSession() {
   const navigate    = useNavigate()
   const location    = useLocation()
 
-  const [screen, setScreen]           = useState('setup')
-  const [client, setClient]           = useState(null)
-  const [currentStepIdx, setCurrentStepIdx] = useState(0) // 0–46 in SEQUENCE
-  const [findings, setFindings]       = useState(initFindings)
-  const [saving, setSaving]           = useState(false)
-  const [saved, setSaved]             = useState(false)
-  const [saveStatus, setSaveStatus]   = useState('')
+  // Stretch data fetched from Supabase
+  const [stretches, setStretches]           = useState([])
+  const [stretchesLoading, setStretchesLoading] = useState(true)
+
+  // Session state
+  const [screen, setScreen]                 = useState('setup')
+  const [client, setClient]                 = useState(null)
+  const [currentStepIdx, setCurrentStepIdx] = useState(0)
+  const [findings, setFindings]             = useState({})
+  const [saving, setSaving]                 = useState(false)
+  const [saved, setSaved]                   = useState(false)
+  const [saveStatus, setSaveStatus]         = useState('')
 
   const assessmentIdRef = useRef(null)
   const [assessmentId, setAssessmentId] = useState(null)
   useEffect(() => { assessmentIdRef.current = assessmentId }, [assessmentId])
 
-  // Resume from in-progress assessment passed via navigation state
+  // Fetch all stretches on mount — keyed by stretch_number in the session flow
+  useEffect(() => {
+    supabase
+      .from('stretches')
+      .select('id, stretch_number, name, body_region, narrative, setup_execution')
+      .order('stretch_number')
+      .then(({ data }) => {
+        setStretches(data ?? [])
+        setStretchesLoading(false)
+      })
+  }, [])
+
+  // O(1) lookup by stretch_number
+  const stretchByNum = Object.fromEntries(stretches.map(s => [s.stretch_number, s]))
+
+  // Resume from in-progress assessment — deferred until stretches are loaded
+  const [resumePending, setResumePending] = useState(null)
+
   useEffect(() => {
     const resume = location.state?.resume
     if (!resume) return
-    const { assessmentId: rid, client: rc, currentIdx: rStep, findings: rf } = resume
+    setResumePending(resume)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!resumePending || stretches.length === 0) return
+    const { assessmentId: rid, client: rc, currentIdx: rStep, findings: rf } = resumePending
     setClient(rc)
     setCurrentStepIdx(Math.min(rStep ?? 0, SEQUENCE.length - 1))
-    setFindings(normalizeFindings(rf))
+    setFindings(normalizeFindings(rf, stretches))
     assessmentIdRef.current = rid
     setAssessmentId(rid)
     setScreen('assessment')
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    setResumePending(null)
+  }, [stretches, resumePending])
 
   function handleBegin(selectedClient) {
     setClient(selectedClient)
-    setFindings(initFindings())
+    setFindings(initFindings(stretches))
     setCurrentStepIdx(0)
     assessmentIdRef.current = null
     setAssessmentId(null)
@@ -802,7 +838,6 @@ export default function DiagnosticSession() {
     setTimeout(() => setSaveStatus(''), 2000)
   }
 
-  // Advance one step forward (called by both StretchScreen and TransitionScreen)
   async function handleAdvance(isLastStretch = false) {
     if (isLastStretch) {
       await autoSave(findings, currentStepIdx, 'complete')
@@ -830,10 +865,10 @@ export default function DiagnosticSession() {
     setSaving(true)
 
     const restrictions = []
-    stretchLibrary.forEach(s => {
+    stretches.forEach(s => {
       ;['left', 'right'].forEach(side => {
-        const e = findings[s.id][side]
-        if (e.rom && e.rom !== 'normal') {
+        const e = findings[s.stretch_number]?.[side]
+        if (e?.rom && e.rom !== 'normal') {
           restrictions.push(`${s.name} (${side}): ${ROM_LABEL[e.rom]}`)
         }
       })
@@ -887,6 +922,7 @@ export default function DiagnosticSession() {
       <SetupScreen
         onBegin={handleBegin}
         preselectedClient={location.state?.preselectedClient ?? null}
+        stretchesLoading={stretchesLoading}
       />
     )
   }
@@ -916,6 +952,7 @@ export default function DiagnosticSession() {
         onGoBack={handleGoBack}
         onExit={handleExit}
         saveStatus={saveStatus}
+        stretchByNum={stretchByNum}
       />
     )
   }
@@ -927,6 +964,7 @@ export default function DiagnosticSession() {
       saving={saving}
       onSave={handleSave}
       onBack={() => setScreen('assessment')}
+      stretches={stretches}
     />
   )
 }

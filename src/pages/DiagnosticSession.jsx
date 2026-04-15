@@ -6,6 +6,17 @@ import { stretchLibrary } from '../data/stretchLibrary'
 
 // ─── Constants ────────────────────────────────────────────────
 
+const TOTAL_STEPS = stretchLibrary.length * 2 // 48
+
+// Derive stretch and side from flat step index (0–47)
+// Even steps → left, odd steps → right
+function stepToContext(step) {
+  return {
+    stretchIdx: Math.floor(step / 2),          // 0–23
+    side:       step % 2 === 0 ? 'left' : 'right',
+  }
+}
+
 const ROM_OPTIONS = [
   {
     value: 'normal',
@@ -28,15 +39,9 @@ const ROM_OPTIONS = [
 ]
 
 const ROM_LABEL = {
-  normal: 'Normal',
-  restricted: 'Restricted',
-  severely_restricted: 'Severely Restricted',
-}
-
-const ROM_COLOR = {
-  normal:               'text-emerald-400',
-  restricted:           'text-gold',
-  severely_restricted:  'text-red-400',
+  normal:               'Normal',
+  restricted:           'Restricted',
+  severely_restricted:  'Severely Restricted',
 }
 
 const EMPTY_SIDE = { rom: null, painPresent: null, compensation: '', notes: '' }
@@ -47,12 +52,6 @@ function initFindings() {
     f[s.id] = { left: { ...EMPTY_SIDE }, right: { ...EMPTY_SIDE } }
   })
   return f
-}
-
-function initSides() {
-  const s = {}
-  stretchLibrary.forEach(stretch => { s[stretch.id] = 'left' })
-  return s
 }
 
 // Normalize JSONB findings (string keys from JSON → numeric keys used by app)
@@ -74,11 +73,11 @@ function normalizeFindings(raw) {
 // ─── Setup Screen ─────────────────────────────────────────────
 
 function SetupScreen({ onBegin, preselectedClient }) {
-  const [clients, setClients]       = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [selected, setSelected]     = useState(preselectedClient ?? null)
-  const { profile }                 = useAuth()
-  const navigate                    = useNavigate()
+  const [clients, setClients]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [selected, setSelected] = useState(preselectedClient ?? null)
+  const { profile }             = useAuth()
+  const navigate                = useNavigate()
 
   useEffect(() => {
     if (!profile?.id) return
@@ -94,79 +93,71 @@ function SetupScreen({ onBegin, preselectedClient }) {
   return (
     <div className="page-container bg-background">
       <div className="px-4 pt-10 pb-28">
-      {/* Back */}
-      <button onClick={() => navigate('/')} className="flex items-center gap-1 text-gray-500 text-sm mb-8 self-start">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-        Home
-      </button>
+        <button onClick={() => navigate('/')} className="flex items-center gap-1 text-gray-500 text-sm mb-8">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Home
+        </button>
 
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs tracking-widest text-gold uppercase mb-1">Savant Method</p>
-        <h1 className="text-3xl font-bold text-white">Diagnostic Assessment</h1>
-        <p className="text-sm text-gray-400 mt-2">24-stretch full-body evaluation</p>
-      </div>
-
-      {/* Info card */}
-      <div className="card mb-6">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          {[['24', 'Stretches'], ['~45', 'Minutes'], ['Full', 'Body']].map(([val, label]) => (
-            <div key={label}>
-              <p className="text-xl font-bold text-gold">{val}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-            </div>
-          ))}
+        <div className="mb-8">
+          <p className="text-xs tracking-widest text-gold uppercase mb-1">Savant Method</p>
+          <h1 className="text-3xl font-bold text-white">Diagnostic Assessment</h1>
+          <p className="text-sm text-gray-400 mt-2">24-stretch full-body evaluation · 48 steps</p>
         </div>
-      </div>
 
-      {/* Client selector */}
-      <div className="mb-6">
-        <label className="block text-xs font-medium text-gray-400 mb-3">Select Client</label>
-        {loading ? (
-          <div className="flex justify-center py-6">
-            <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="card text-center py-6">
-            <p className="text-sm text-gray-400">No active clients yet.</p>
-            <button onClick={() => navigate('/clients')} className="text-gold text-sm mt-2">Add a client →</button>
-          </div>
-        ) : (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {clients.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setSelected(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left ${
-                  selected?.id === c.id
-                    ? 'border-gold bg-gold/10'
-                    : 'border-border bg-surface'
-                }`}
-              >
-                <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-                  <span className="text-gold text-xs font-bold">
-                    {c.first_name[0]}{c.last_name[0]}
-                  </span>
-                </div>
-                <span className={`text-sm font-medium ${selected?.id === c.id ? 'text-gold' : 'text-white'}`}>
-                  {c.first_name} {c.last_name}
-                </span>
-                {selected?.id === c.id && (
-                  <svg className="ml-auto text-gold" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                )}
-              </button>
+        <div className="card mb-6">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            {[['24', 'Stretches'], ['48', 'Steps'], ['~45', 'Minutes']].map(([val, label]) => (
+              <div key={label}>
+                <p className="text-xl font-bold text-gold">{val}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+              </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      <button
-        onClick={() => selected && onBegin(selected)}
-        disabled={!selected}
-        className="btn-gold w-full disabled:opacity-30 disabled:scale-100 mt-6"
-      >
-        Begin Assessment
-      </button>
+        <div className="mb-6">
+          <label className="block text-xs font-medium text-gray-400 mb-3">Select Client</label>
+          {loading ? (
+            <div className="flex justify-center py-6">
+              <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : clients.length === 0 ? (
+            <div className="card text-center py-6">
+              <p className="text-sm text-gray-400">No active clients yet.</p>
+              <button onClick={() => navigate('/clients')} className="text-gold text-sm mt-2">Add a client →</button>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {clients.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelected(c)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left ${
+                    selected?.id === c.id ? 'border-gold bg-gold/10' : 'border-border bg-surface'
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center flex-none">
+                    <span className="text-gold text-xs font-bold">{c.first_name[0]}{c.last_name[0]}</span>
+                  </div>
+                  <span className={`text-sm font-medium ${selected?.id === c.id ? 'text-gold' : 'text-white'}`}>
+                    {c.first_name} {c.last_name}
+                  </span>
+                  {selected?.id === c.id && (
+                    <svg className="ml-auto text-gold" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => selected && onBegin(selected)}
+          disabled={!selected}
+          className="btn-gold w-full disabled:opacity-30 disabled:scale-100 mt-6"
+        >
+          Begin Assessment
+        </button>
       </div>
     </div>
   )
@@ -199,8 +190,9 @@ function FindingForm({ finding, onChange }) {
       <div>
         <p className="text-xs font-medium text-gray-400 mb-2">Pain Present</p>
         <div className="flex gap-2">
-          {[{ val: true, label: 'Yes', active: 'bg-red-500 text-white border-red-500', idle: 'bg-surface border-border text-gray-400' },
-            { val: false, label: 'No',  active: 'bg-emerald-500 text-black border-emerald-500', idle: 'bg-surface border-border text-gray-400' }
+          {[
+            { val: true,  label: 'Yes', active: 'bg-red-500 text-white border-red-500',         idle: 'bg-surface border-border text-gray-400' },
+            { val: false, label: 'No',  active: 'bg-emerald-500 text-black border-emerald-500', idle: 'bg-surface border-border text-gray-400' },
           ].map(({ val, label, active, idle }) => (
             <button
               key={label}
@@ -244,22 +236,22 @@ function FindingForm({ finding, onChange }) {
 
 function AssessmentScreen({
   findings, setFindings,
-  activeSides, setActiveSides,
-  currentIdx, setCurrentIdx,
+  currentStep, setCurrentStep,
   onNext,
   onExit,
   saveStatus,
 }) {
   const [showHowTo, setShowHowTo] = useState(false)
-  const stretch    = stretchLibrary[currentIdx]
-  const isLast     = currentIdx === stretchLibrary.length - 1
-  const isFirst    = currentIdx === 0
-  const side       = activeSides[stretch.id]
-  const finding    = findings[stretch.id][side]
-  const progress   = ((currentIdx + 1) / stretchLibrary.length) * 100
 
-  // Reset howTo toggle when stretch changes
-  useEffect(() => { setShowHowTo(false) }, [currentIdx])
+  const { stretchIdx, side } = stepToContext(currentStep)
+  const stretch  = stretchLibrary[stretchIdx]
+  const isLast   = currentStep === TOTAL_STEPS - 1
+  const isFirst  = currentStep === 0
+  const finding  = findings[stretch.id][side]
+  const progress = ((currentStep + 1) / TOTAL_STEPS) * 100
+
+  // Collapse how-to whenever the stretch changes
+  useEffect(() => { setShowHowTo(false) }, [stretchIdx])
 
   function updateFinding(field, value) {
     setFindings(prev => ({
@@ -271,52 +263,47 @@ function AssessmentScreen({
     }))
   }
 
-  function setSide(s) {
-    setActiveSides(prev => ({ ...prev, [stretch.id]: s }))
-  }
-
-  function goPrev() {
-    if (!isFirst) setCurrentIdx(i => i - 1)
+  const sideStyles = {
+    left:  { pill: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',   label: '← Left Side'  },
+    right: { pill: 'bg-violet-500/10 text-violet-400 border border-violet-500/20', label: 'Right Side →' },
   }
 
   return (
     <div className="fixed inset-0 z-10 bg-background flex flex-col">
+
       {/* Progress bar */}
       <div className="flex-none h-1 bg-border">
-        <div
-          className="h-full bg-gold transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
+        <div className="h-full bg-gold transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* Save status indicator */}
+      {/* Save status */}
       <div className="flex-none h-5 bg-background flex items-center justify-center">
-        {saveStatus === 'saving' && (
-          <p className="text-[10px] text-gray-500">Saving…</p>
-        )}
-        {saveStatus === 'saved' && (
-          <p className="text-[10px] text-emerald-500">Saved ✓</p>
-        )}
+        {saveStatus === 'saving' && <p className="text-[10px] text-gray-500">Saving…</p>}
+        {saveStatus === 'saved'  && <p className="text-[10px] text-emerald-500">Saved ✓</p>}
       </div>
 
       {/* Stretch header */}
-      <div className="flex-none bg-surface border-b border-border px-4 pt-3 pb-4">
+      <div className="flex-none bg-surface border-b border-border px-4 pt-3 pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="flex-1 min-w-0">
+            {/* Stretch number + side pill */}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-2xl font-bold text-gold leading-none">
                 {String(stretch.id).padStart(2, '0')}
               </span>
               <span className="text-[10px] text-gray-500">/ 24</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sideStyles[side].pill}`}>
+                {sideStyles[side].label}
+              </span>
             </div>
-            <h2 className="text-xl font-bold text-white leading-tight">{stretch.name}</h2>
+            <h2 className="text-lg font-bold text-white leading-tight truncate pr-2">{stretch.name}</h2>
             <span className="inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gold/10 text-gold">
               {stretch.region}
             </span>
           </div>
 
-          {/* Right column: X button + progress */}
-          <div className="flex flex-col items-end gap-2 ml-4">
+          {/* X button + step counter */}
+          <div className="flex flex-col items-end gap-2 ml-3 flex-none">
             <button
               onClick={onExit}
               className="w-8 h-8 rounded-full flex items-center justify-center border border-border active:scale-90 transition-transform"
@@ -328,7 +315,7 @@ function AssessmentScreen({
               </svg>
             </button>
             <div className="text-right">
-              <p className="text-xs text-gray-500">{currentIdx + 1} of 24</p>
+              <p className="text-xs text-gray-500">{currentStep + 1} / {TOTAL_STEPS}</p>
               <div className="mt-1 w-16 h-1.5 bg-border rounded-full overflow-hidden">
                 <div className="h-full bg-gold rounded-full" style={{ width: `${progress}%` }} />
               </div>
@@ -341,77 +328,90 @@ function AssessmentScreen({
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-5 space-y-5">
 
-          {/* Purpose */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-1.5">Purpose</p>
-            <p className="text-sm text-gray-300 leading-relaxed">{stretch.purpose}</p>
-          </div>
+          {/* Purpose — only show on left (first encounter with this stretch) */}
+          {side === 'left' && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-1.5">Purpose</p>
+              <p className="text-sm text-gray-300 leading-relaxed">{stretch.purpose}</p>
+            </div>
+          )}
 
-          {/* How to perform (collapsible) */}
-          <div>
-            <button
-              onClick={() => setShowHowTo(v => !v)}
-              className="flex items-center justify-between w-full text-left"
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-gold">
-                How to Perform
-              </p>
-              <svg
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="#C9A84C" strokeWidth="2"
-                className={`transition-transform ${showHowTo ? 'rotate-180' : ''}`}
+          {/* How to perform (collapsible) — only on left side */}
+          {side === 'left' && (
+            <div>
+              <button
+                onClick={() => setShowHowTo(v => !v)}
+                className="flex items-center justify-between w-full text-left"
               >
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            {showHowTo && (
-              <ol className="mt-2 space-y-2">
-                {stretch.howTo.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-gray-300 leading-relaxed">
-                    <span className="flex-none w-5 h-5 rounded-full bg-gold/15 text-gold text-[10px] font-bold flex items-center justify-center mt-0.5">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-gold">How to Perform</p>
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="#C9A84C" strokeWidth="2"
+                  className={`transition-transform ${showHowTo ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              {showHowTo && (
+                <ol className="mt-2 space-y-2">
+                  {stretch.howTo.map((step, i) => (
+                    <li key={i} className="flex gap-3 text-sm text-gray-300 leading-relaxed">
+                      <span className="flex-none w-5 h-5 rounded-full bg-gold/15 text-gold text-[10px] font-bold flex items-center justify-center mt-0.5">
+                        {i + 1}
+                      </span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+
+          {/* On right side, show a compact recap of left findings */}
+          {side === 'right' && (() => {
+            const leftFinding = findings[stretch.id].left
+            const hasLeftData = leftFinding.rom !== null
+            return hasLeftData ? (
+              <div className="px-3 py-2.5 rounded-xl bg-blue-500/5 border border-blue-500/15">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-400 mb-1">Left Side Result</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    leftFinding.rom === 'normal'              ? 'bg-emerald-500/15 text-emerald-400' :
+                    leftFinding.rom === 'restricted'          ? 'bg-gold/15 text-gold' :
+                    leftFinding.rom === 'severely_restricted' ? 'bg-red-500/15 text-red-400' : ''
+                  }`}>
+                    {ROM_LABEL[leftFinding.rom]}
+                  </span>
+                  {leftFinding.painPresent === true && (
+                    <span className="text-xs text-red-400">· Pain</span>
+                  )}
+                  {leftFinding.compensation && (
+                    <span className="text-xs text-gray-500 truncate">{leftFinding.compensation}</span>
+                  )}
+                </div>
+              </div>
+            ) : null
+          })()}
 
           <div className="h-px bg-border" />
 
-          {/* Findings */}
+          {/* Findings form */}
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">Findings</p>
-
-            {/* L/R toggle */}
-            <div className="flex gap-1 bg-surface border border-border rounded-xl p-1 mb-4">
-              {(['left', 'right']).map(s => (
-                <button
-                  key={s}
-                  onClick={() => setSide(s)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                    side === s ? 'bg-gold text-black' : 'text-gray-400'
-                  }`}
-                >
-                  {s === 'left' ? 'Left Side' : 'Right Side'}
-                </button>
-              ))}
-            </div>
-
             <FindingForm finding={finding} onChange={updateFinding} />
           </div>
 
-          {/* Spacer for footer */}
           <div className="h-4" />
         </div>
       </div>
 
       {/* Footer nav */}
-      <div className="flex-none border-t border-border bg-surface px-4 py-3 flex gap-3"
-           style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+      <div
+        className="flex-none border-t border-border bg-surface px-4 py-3 flex gap-3"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
         <button
-          onClick={goPrev}
+          onClick={() => setCurrentStep(s => s - 1)}
           disabled={isFirst}
           className="flex-1 py-3 rounded-xl border border-border text-sm font-semibold text-gray-400 disabled:opacity-30 active:scale-95 transition-transform"
         >
@@ -442,7 +442,6 @@ function romBadgeClass(rom) {
 function SummaryScreen({ findings, client, onSave, onBack, saving }) {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
 
-  // Aggregate findings
   const restrictions = []
   let totalAssessed = 0
   let painCount = 0
@@ -464,7 +463,6 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
   const severeCount     = restrictions.filter(r => r.entry.rom === 'severely_restricted').length
   const restrictedCount = restrictions.filter(r => r.entry.rom === 'restricted').length
 
-  // Stretches with any finding recorded
   const assessedStretches = stretchLibrary.filter(s => {
     const f = findings[s.id]
     return f.left.rom !== null || f.right.rom !== null
@@ -472,7 +470,6 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
 
   return (
     <div className="fixed inset-0 z-10 bg-background flex flex-col">
-      {/* Header */}
       <div className="flex-none flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border bg-surface">
         <button onClick={onBack} className="w-9 h-9 rounded-full border border-border flex items-center justify-center flex-none active:scale-90 transition-transform">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -486,13 +483,10 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-5 space-y-5">
 
-          {/* Client + stats */}
           <div className="card">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-                <span className="text-gold font-bold">
-                  {client.first_name[0]}{client.last_name[0]}
-                </span>
+                <span className="text-gold font-bold">{client.first_name[0]}{client.last_name[0]}</span>
               </div>
               <div>
                 <p className="font-semibold text-white">{client.first_name} {client.last_name}</p>
@@ -515,18 +509,13 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
             </div>
           </div>
 
-          {/* Highlighted restrictions */}
           {restrictions.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-2">
-                Restrictions Found
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-2">Restrictions Found</p>
               <div className="space-y-2">
                 {restrictions.map(({ stretch, side, entry }) => (
                   <div key={`${stretch.id}-${side}`} className="card flex items-start gap-3 py-3">
-                    <span className="text-sm font-bold text-gold w-7 flex-none">
-                      {String(stretch.id).padStart(2, '0')}
-                    </span>
+                    <span className="text-sm font-bold text-gold w-7 flex-none">{String(stretch.id).padStart(2, '0')}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-white">{stretch.name}</p>
@@ -535,9 +524,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
                           {ROM_LABEL[entry.rom]}
                         </span>
                         {entry.painPresent && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">
-                            Pain
-                          </span>
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">Pain</span>
                         )}
                       </div>
                       {entry.compensation && (
@@ -550,7 +537,6 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
             </div>
           )}
 
-          {/* Full findings list */}
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-2">
               All Findings ({assessedStretches.length} stretches)
@@ -575,9 +561,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}>
                               {ROM_LABEL[entry.rom]}
                             </span>
-                            {entry.painPresent && (
-                              <span className="text-[10px] text-red-400">· Pain</span>
-                            )}
+                            {entry.painPresent && <span className="text-[10px] text-red-400">· Pain</span>}
                           </div>
                         )
                       })}
@@ -600,19 +584,14 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex-none border-t border-border bg-surface px-4 py-3 space-y-2"
-           style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-        <button
-          onClick={onSave}
-          disabled={saving}
-          className="btn-gold w-full disabled:opacity-50 disabled:scale-100"
-        >
+      <div
+        className="flex-none border-t border-border bg-surface px-4 py-3 space-y-2"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
+        <button onClick={onSave} disabled={saving} className="btn-gold w-full disabled:opacity-50 disabled:scale-100">
           {saving ? 'Saving…' : 'Done — Return to Home'}
         </button>
-        <button className="btn-outline w-full">
-          Share / Export
-        </button>
+        <button className="btn-outline w-full">Share / Export</button>
       </div>
     </div>
   )
@@ -621,60 +600,52 @@ function SummaryScreen({ findings, client, onSave, onBack, saving }) {
 // ─── Main Component ───────────────────────────────────────────
 
 export default function DiagnosticSession() {
-  const { profile }     = useAuth()
-  const navigate        = useNavigate()
-  const location        = useLocation()
+  const { profile } = useAuth()
+  const navigate    = useNavigate()
+  const location    = useLocation()
 
-  const [screen, setScreen]           = useState('setup')
-  const [client, setClient]           = useState(null)
-  const [currentIdx, setCurrentIdx]   = useState(0)
-  const [findings, setFindings]       = useState(initFindings)
-  const [activeSides, setActiveSides] = useState(initSides)
-  const [saving, setSaving]           = useState(false)
-  const [saved, setSaved]             = useState(false)
-  const [saveStatus, setSaveStatus]   = useState('') // '' | 'saving' | 'saved'
+  const [screen, setScreen]         = useState('setup')
+  const [client, setClient]         = useState(null)
+  const [currentStep, setCurrentStep] = useState(0)   // 0–47 flat index
+  const [findings, setFindings]     = useState(initFindings)
+  const [saving, setSaving]         = useState(false)
+  const [saved, setSaved]           = useState(false)
+  const [saveStatus, setSaveStatus] = useState('')
 
-  // Ref for assessmentId so async callbacks always see the latest value
   const assessmentIdRef = useRef(null)
   const [assessmentId, setAssessmentId] = useState(null)
 
-  // Keep ref in sync with state
-  useEffect(() => {
-    assessmentIdRef.current = assessmentId
-  }, [assessmentId])
+  useEffect(() => { assessmentIdRef.current = assessmentId }, [assessmentId])
 
-  // Resume from in-progress assessment (passed via navigation state)
+  // Resume from in-progress assessment
   useEffect(() => {
     const resume = location.state?.resume
     if (!resume) return
-    const { assessmentId: resumeId, client: resumeClient, currentIdx: resumeIdx, findings: resumeFindings } = resume
-    setClient(resumeClient)
-    setCurrentIdx(resumeIdx ?? 0)
-    setFindings(normalizeFindings(resumeFindings))
-    setActiveSides(initSides())
-    assessmentIdRef.current = resumeId
-    setAssessmentId(resumeId)
+    const { assessmentId: rid, client: rc, currentIdx: rStep, findings: rf } = resume
+    setClient(rc)
+    setCurrentStep(rStep ?? 0)           // stored value is now a step (0–47)
+    setFindings(normalizeFindings(rf))
+    assessmentIdRef.current = rid
+    setAssessmentId(rid)
     setScreen('assessment')
-  }, []) // only on mount
+  }, [])
 
   function handleBegin(selectedClient) {
     setClient(selectedClient)
     setFindings(initFindings())
-    setActiveSides(initSides())
-    setCurrentIdx(0)
+    setCurrentStep(0)
     assessmentIdRef.current = null
     setAssessmentId(null)
     setScreen('assessment')
   }
 
-  // Auto-save findings to Supabase. INSERT on first call, UPDATE thereafter.
-  async function autoSave(currentFindings, idx, status = 'in_progress') {
+  // Auto-save: INSERT first time, UPDATE thereafter.
+  // current_stretch_index now stores the flat step (0–47).
+  async function autoSave(currentFindings, step, status = 'in_progress') {
     if (!profile?.id || !client?.id) return
-
     setSaveStatus('saving')
 
     if (!assessmentIdRef.current) {
-      // First save — INSERT
       const { data, error } = await supabase
         .from('assessments')
         .insert({
@@ -683,7 +654,7 @@ export default function DiagnosticSession() {
           session_id:            null,
           findings:              currentFindings,
           findings_data:         currentFindings,
-          current_stretch_index: idx,
+          current_stretch_index: step,
           status,
           summary:               '',
         })
@@ -695,49 +666,35 @@ export default function DiagnosticSession() {
         setAssessmentId(data.id)
       }
     } else {
-      // Subsequent saves — UPDATE
       await supabase
         .from('assessments')
-        .update({
-          findings_data:         currentFindings,
-          current_stretch_index: idx,
-          status,
-        })
+        .update({ findings_data: currentFindings, current_stretch_index: step, status })
         .eq('id', assessmentIdRef.current)
     }
 
     setSaveStatus('saved')
-    // Clear 'saved' indicator after 2 seconds
     setTimeout(() => setSaveStatus(''), 2000)
   }
 
-  // Called by AssessmentScreen Next button
   async function handleNext(isLast) {
     if (isLast) {
-      // Final stretch — save as complete then show summary
-      await autoSave(findings, currentIdx, 'complete')
+      await autoSave(findings, currentStep, 'complete')
       setScreen('summary')
     } else {
-      // Fire-and-forget save, advance immediately for responsiveness
-      autoSave(findings, currentIdx, 'in_progress')
-      setCurrentIdx(i => i + 1)
+      autoSave(findings, currentStep, 'in_progress')
+      setCurrentStep(s => s + 1)
     }
   }
 
-  // Called by AssessmentScreen X button
   async function handleExit() {
-    await autoSave(findings, currentIdx, 'in_progress')
-    navigate('/', {
-      state: { savedMessage: 'Assessment saved. You can resume from where you left off.' },
-    })
+    await autoSave(findings, currentStep, 'in_progress')
+    navigate('/', { state: { savedMessage: 'Assessment saved. You can resume from where you left off.' } })
   }
 
-  // Called by SummaryScreen Done button
   async function handleSave() {
     if (!profile?.id || !client?.id) return
     setSaving(true)
 
-    // Build a text summary
     const restrictions = []
     stretchLibrary.forEach(s => {
       ;['left', 'right'].forEach(side => {
@@ -752,18 +709,16 @@ export default function DiagnosticSession() {
       : 'No restrictions found.'
 
     if (assessmentIdRef.current) {
-      // Already saved — just update the summary text
       await supabase
         .from('assessments')
-        .update({ summary, findings: findings, findings_data: findings, status: 'complete' })
+        .update({ summary, findings, findings_data: findings, status: 'complete' })
         .eq('id', assessmentIdRef.current)
     } else {
-      // Fallback: insert fresh (shouldn't normally happen)
       await supabase.from('assessments').insert({
         client_id:       client.id,
         practitioner_id: profile.id,
         session_id:      null,
-        findings:        findings,
+        findings,
         findings_data:   findings,
         summary,
         status:          'complete',
@@ -798,10 +753,8 @@ export default function DiagnosticSession() {
       <AssessmentScreen
         findings={findings}
         setFindings={setFindings}
-        activeSides={activeSides}
-        setActiveSides={setActiveSides}
-        currentIdx={currentIdx}
-        setCurrentIdx={setCurrentIdx}
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
         onNext={handleNext}
         onExit={handleExit}
         saveStatus={saveStatus}

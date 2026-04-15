@@ -9,6 +9,7 @@ import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import DiagnosticSession from './pages/DiagnosticSession'
+import ClientProfile from './pages/ClientProfile'
 
 function AuthedApp() {
   return (
@@ -20,6 +21,7 @@ function AuthedApp() {
         <Route path="/sessions" element={<Sessions />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/diagnostic" element={<DiagnosticSession />} />
+        <Route path="/clients/:id" element={<ClientProfile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />

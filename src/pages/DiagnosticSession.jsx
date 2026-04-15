@@ -73,10 +73,10 @@ function normalizeFindings(raw) {
 
 // ─── Setup Screen ─────────────────────────────────────────────
 
-function SetupScreen({ onBegin }) {
+function SetupScreen({ onBegin, preselectedClient }) {
   const [clients, setClients]       = useState([])
   const [loading, setLoading]       = useState(true)
-  const [selected, setSelected]     = useState(null)
+  const [selected, setSelected]     = useState(preselectedClient ?? null)
   const { profile }                 = useAuth()
   const navigate                    = useNavigate()
 
@@ -790,7 +790,7 @@ export default function DiagnosticSession() {
   }
 
   if (screen === 'setup') {
-    return <SetupScreen onBegin={handleBegin} />
+    return <SetupScreen onBegin={handleBegin} preselectedClient={location.state?.preselectedClient ?? null} />
   }
 
   if (screen === 'assessment') {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
@@ -136,13 +137,13 @@ function Field({ label, name, value, onChange, placeholder, type = 'text' }) {
 
 // ─── Client Card ─────────────────────────────────────────────
 
-function ClientCard({ client }) {
+function ClientCard({ client, onClick }) {
   const lastSession = client.sessions?.length
     ? client.sessions.reduce((a, b) => (a.date > b.date ? a : b))
     : null
 
   return (
-    <div className="card flex items-start gap-3 active:scale-[0.99] transition-transform">
+    <button onClick={onClick} className="card w-full flex items-start gap-3 text-left active:scale-[0.99] transition-transform">
       {/* Avatar */}
       <div className="w-11 h-11 rounded-full bg-gold/20 flex items-center justify-center flex-none mt-0.5">
         <span className="text-gold text-sm font-bold">
@@ -180,7 +181,10 @@ function ClientCard({ client }) {
           </p>
         )}
       </div>
-    </div>
+      <svg className="flex-none self-center" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
   )
 }
 
@@ -188,6 +192,7 @@ function ClientCard({ client }) {
 
 export default function Clients() {
   const { profile, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const [clients, setClients]     = useState([])
   const [fetching, setFetching]   = useState(true)
   const [dbError, setDbError]     = useState('')
@@ -312,7 +317,11 @@ export default function Clients() {
         {filtered.length > 0 && (
           <div className="space-y-3">
             {filtered.map((client) => (
-              <ClientCard key={client.id} client={client} />
+              <ClientCard
+                key={client.id}
+                client={client}
+                onClick={() => navigate(`/clients/${client.id}`)}
+              />
             ))}
           </div>
         )}

@@ -2,59 +2,38 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 async function fetchProfile(authUser) {
-  console.log('[useAuth] fetchProfile — cached user id:', authUser.id)
-
-  // Use getUser() to get a server-verified token, not the cached session.
-  // This confirms the access_token is actually being sent in the Authorization
-  // header. If this returns a user, the JWT is valid and auth.uid() will work.
-  const { data: { user }, error: userErr } = await supabase.auth.getUser()
-  console.log('[useAuth] getUser() (server-verified) → id:', user?.id, '| error:', userErr?.message ?? 'none')
-
-  const uid = user?.id ?? authUser.id
-  console.log('[useAuth] using uid:', uid)
+  console.log('[useAuth] fetchProfile — uid:', authUser.id)
 
   // ── Primary: SECURITY DEFINER RPC (bypasses RLS) ─────────────
   const { data: rpcData, error: rpcErr } = await supabase.rpc('get_my_profile')
-  console.log('[useAuth] get_my_profile RPC → data:', JSON.stringify(rpcData), '| error:', JSON.stringify(rpcErr))
+  console.log('[useAuth] get_my_profile RPC →', JSON.stringify(rpcData), '| error:', JSON.stringify(rpcErr))
 
-  if (rpcData) {
-    console.log('[useAuth] ✅ profile loaded via RPC — id:', rpcData.id)
-    return rpcData
-  }
-  if (rpcErr) {
-    console.warn('[useAuth] RPC error — code:', rpcErr.code, '| message:', rpcErr.message)
-  }
+  if (rpcData) return rpcData
+  if (rpcErr) console.warn('[useAuth] RPC error:', rpcErr.code, rpcErr.message)
 
   // ── Fallback: direct table query ──────────────────────────────
   const { data, error: selectErr } = await supabase
     .from('profiles')
     .select('*')
-    .eq('user_id', uid)
+    .eq('user_id', authUser.id)
     .single()
 
-  console.log('[useAuth] profiles.select → data:', JSON.stringify(data), '| error:', JSON.stringify(selectErr))
-
-  if (data) {
-    console.log('[useAuth] ✅ profile loaded via select — id:', data.id)
-    return data
-  }
+  console.log('[useAuth] profiles.select →', JSON.stringify(data), '| error:', JSON.stringify(selectErr))
+  if (data) return data
 
   // ── Last resort: insert if genuinely missing ──────────────────
   if (selectErr?.code === 'PGRST116') {
     const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || ''
     const { data: inserted, error: insertErr } = await supabase
       .from('profiles')
-      .insert({ user_id: uid, email: authUser.email ?? '', full_name: fullName, role: 'practitioner' })
+      .insert({ user_id: authUser.id, email: authUser.email ?? '', full_name: fullName, role: 'practitioner' })
       .select()
       .single()
-    console.log('[useAuth] INSERT → data:', JSON.stringify(inserted), '| error:', JSON.stringify(insertErr))
-    if (inserted) {
-      console.log('[useAuth] ✅ profile created — id:', inserted.id)
-      return inserted
-    }
+    console.log('[useAuth] INSERT →', JSON.stringify(inserted), '| error:', JSON.stringify(insertErr))
+    if (inserted) return inserted
   }
 
-  console.error('[useAuth] ❌ profile is null. getUser() id was:', user?.id, '— if null, the session token is not reaching Supabase.')
+  console.error('[useAuth] ❌ profile is null for uid:', authUser.id)
   return null
 }
 
@@ -69,56 +48,73 @@ export function useAuth() {
   useEffect(() => {
     let settled = false
 
-    const timeout = setTimeout(() => {
+    function resolve() {
       if (!settled) {
-        console.warn('[useAuth] ⏱ 10s timeout — forcing loading=false. Profile is null.')
         settled = true
         setLoading(false)
       }
-    }, 10000)
+    }
+
+    // Timeout backstop — should never fire now that resolve() is called
+    // independently of the profile fetch, but kept as a safety net.
+    const timeout = setTimeout(() => {
+      console.warn('[useAuth] ⏱ 5s timeout hit — forcing loading=false')
+      resolve()
+    }, 5000)
+
+    // onAuthStateChange is the source of truth for session state.
+    // Registered before init() so it catches the INITIAL_SESSION event.
+    // NOT async — supabase-js does not await the callback, so async here
+    // creates a fire-and-forget that races with state updates.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[useAuth] onAuthStateChange →', _event, session?.user?.email ?? 'signed out')
+      setSession(session)
+      setUser(session?.user ?? null)
+
+      if (!session?.user) {
+        setProfile(null)
+        resolve()
+        return
+      }
+
+      // Resolve loading as soon as we know the user — don't block on profile.
+      resolve()
+
+      // Fetch profile in the background; UI will update when it arrives.
+      fetchProfile(session.user)
+        .then(p => setProfile(p))
+        .catch(err => console.error('[useAuth] fetchProfile error:', err))
+    })
 
     async function init() {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('[useAuth] getSession →',
-          session ? `session found for ${session.user.email}` : 'no session',
-          error ? `error: ${error.message}` : ''
-        )
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log('[useAuth] getSession →', session ? `found (${session.user.email})` : 'no session')
+
+        // If onAuthStateChange already fired and settled us, skip.
+        if (settled) return
+
         setSession(session)
         setUser(session?.user ?? null)
-        if (session?.user) {
-          const p = await fetchProfile(session.user)
-          setProfile(p)
+
+        if (!session?.user) {
+          resolve()
+          return
         }
+
+        // Resolve immediately — don't wait for profile.
+        resolve()
+
+        fetchProfile(session.user)
+          .then(p => setProfile(p))
+          .catch(err => console.error('[useAuth] fetchProfile error:', err))
       } catch (err) {
         console.error('[useAuth] init() threw:', err)
-      } finally {
-        if (!settled) {
-          settled = true
-          clearTimeout(timeout)
-          setLoading(false)
-        }
+        resolve()
       }
     }
 
     init()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[useAuth] onAuthStateChange →', _event, session?.user?.email ?? 'signed out')
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        const p = await fetchProfile(session.user)
-        setProfile(p)
-      } else {
-        setProfile(null)
-      }
-      if (!settled) {
-        settled = true
-        clearTimeout(timeout)
-        setLoading(false)
-      }
-    })
 
     return () => { clearTimeout(timeout); subscription.unsubscribe() }
   }, [])
@@ -138,19 +134,14 @@ export function useAuth() {
     return data
   }, [])
 
-  const signOut = useCallback(async () => {
-    // 'local' scope wipes the session from localStorage instantly without a network
-    // call, so onAuthStateChange fires immediately and there's nothing to hang on.
-    try {
-      await supabase.auth.signOut({ scope: 'local' })
-    } catch {
-      // If the supabase call somehow fails, manually purge any sb-* keys so the
-      // session is definitely gone before we redirect.
-      Object.keys(localStorage)
-        .filter(k => k.startsWith('sb-'))
-        .forEach(k => localStorage.removeItem(k))
-    }
-    // Hard redirect — reloads the app with no session, guaranteed login screen.
+  const signOut = useCallback(() => {
+    // Synchronously clear all sb-* keys from localStorage — cannot hang.
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('sb-'))
+      .forEach(k => localStorage.removeItem(k))
+    // Best-effort server-side token revocation (non-blocking, result ignored).
+    supabase.auth.signOut().catch(() => {})
+    // Hard redirect — app reloads with no session in storage → login screen.
     window.location.replace('/')
   }, [])
 

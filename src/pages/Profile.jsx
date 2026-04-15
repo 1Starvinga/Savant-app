@@ -13,13 +13,9 @@ export default function Profile() {
     .join('')
     .toUpperCase()
 
-  async function handleSignOut() {
+  function handleSignOut() {
     setSigningOut(true)
-    try {
-      await signOut()
-    } catch {
-      setSigningOut(false)
-    }
+    signOut()
   }
 
   return (

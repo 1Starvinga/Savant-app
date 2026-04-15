@@ -138,9 +138,13 @@ export function useAuth() {
     return data
   }, [])
 
-  const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+  const signOut = useCallback(() => {
+    // Clear state immediately so the UI transitions to the login screen right away.
+    // Don't await the Supabase call — it can hang on slow networks and freeze the UI.
+    setUser(null)
+    setSession(null)
+    setProfile(null)
+    supabase.auth.signOut().catch(() => {})
   }, [])
 
   return { user, session, profile, loading, signIn, signOut, signUp }

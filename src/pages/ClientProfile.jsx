@@ -288,7 +288,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
           {!isComplete && (
             <div className="px-4 py-3 rounded-xl bg-gold/10 border border-gold/30">
               <p className="text-xs text-gold">
-                Assessment paused at stretch {(assessment.current_stretch_index ?? 0) + 1} of 24.
+                Assessment paused at step {(assessment.current_stretch_index ?? 0) + 1} of 47.
                 Findings shown below are recorded so far.
               </p>
             </div>
@@ -436,7 +436,7 @@ function AssessmentRow({ assessment, onSelect }) {
             ? restrictionCount > 0
               ? `${restrictionCount} restriction${restrictionCount !== 1 ? 's' : ''} found`
               : 'No restrictions'
-            : `Paused at stretch ${(assessment.current_stretch_index ?? 0) + 1} of 24`}
+            : `Paused at step ${(assessment.current_stretch_index ?? 0) + 1} of 47`}
         </p>
       </div>
 

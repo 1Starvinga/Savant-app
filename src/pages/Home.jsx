@@ -101,7 +101,7 @@ export default function Home() {
               <p className="text-sm text-white truncate">
                 {inProgress.clients.first_name} {inProgress.clients.last_name}
                 <span className="text-gray-400">
-                  {' '}· Stretch {(inProgress.current_stretch_index ?? 0) + 1} of 24
+                  {' '}· Step {(inProgress.current_stretch_index ?? 0) + 1} of 47
                 </span>
               </p>
             </div>

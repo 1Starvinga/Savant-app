@@ -9,9 +9,9 @@ export default {
       colors: {
         background: '#0D0D0D',
         gold: {
-          DEFAULT: '#E8E4DC',
-          light: '#F2EFE9',
-          dark: '#C8C4BC',
+          DEFAULT: '#D4CFC7',
+          light: '#E2DED8',
+          dark: '#ABA7A0',
         },
         surface: '#161616',
         border: '#262626',

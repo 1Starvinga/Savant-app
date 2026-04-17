@@ -480,7 +480,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-gold">How to Perform</p>
                 <svg
                   width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="#E8E4DC" strokeWidth="2"
+                  stroke="#D4CFC7" strokeWidth="2"
                   className={`transition-transform ${showHowTo ? 'rotate-180' : ''}`}
                 >
                   <polyline points="6 9 12 15 18 9"/>

@@ -9,7 +9,7 @@ const REGION_STYLE = {
 }
 
 function regionStyle(region) {
-  return REGION_STYLE[region] ?? { bg: '#1C1C1C', text: '#E8E4DC' }
+  return REGION_STYLE[region] ?? { bg: '#1C1C1C', text: '#D4CFC7' }
 }
 
 // ─── Helpers ───────────────────────────────────────────────────

@@ -7,10 +7,10 @@ import { useAuth } from '../hooks/useAuth'
 // Numbers in each phase's stretches array correspond to stretch_number in Supabase
 
 const PHASES = [
-  { id: 1, label: 'Supine — Right Leg', position: 'Supine', side: 'right', stretches: [1,2,3,4,6] },
-  { id: 2, label: 'Supine — Left Leg',  position: 'Supine', side: 'left',  stretches: [1,2,3,4,6] },
-  { id: 3, label: 'Prone — Right Leg',  position: 'Prone',  side: 'right', stretches: [5,9,10,11,12] },
-  { id: 4, label: 'Prone — Left Leg',   position: 'Prone',  side: 'left',  stretches: [5,9,10,11,12] },
+  { id: 1, label: 'Supine — Right Leg', position: 'Supine', side: 'right', stretches: [1,2,3,4,6,5] },
+  { id: 2, label: 'Supine — Left Leg',  position: 'Supine', side: 'left',  stretches: [1,2,3,4,6,5] },
+  { id: 3, label: 'Prone — Right Leg',  position: 'Prone',  side: 'right', stretches: [9,10,11,12] },
+  { id: 4, label: 'Prone — Left Leg',   position: 'Prone',  side: 'left',  stretches: [9,10,11,12] },
   { id: 5, label: 'Prone — Right Arm',  position: 'Prone',  side: 'right', stretches: [13,14,15] },
   { id: 6, label: 'Prone — Left Arm',   position: 'Prone',  side: 'left',  stretches: [13,14,15] },
   { id: 7, label: 'Supine — Right Arm', position: 'Supine', side: 'right', stretches: [18,16,17,19,20,21] },

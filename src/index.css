@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'BigRiver';
+  src: url('./assets/fonts/big_river_sample.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BigRiverScript';
+  src: url('./assets/fonts/big_river_script_sample.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -29,11 +45,11 @@
   }
 
   .btn-gold {
-    @apply bg-gold text-black font-semibold rounded-xl px-6 py-3 active:scale-95 transition-transform;
+    @apply bg-gold text-[#0D0D0D] font-semibold tracking-wide rounded-xl px-6 py-3 active:scale-95 transition-transform;
   }
 
   .btn-outline {
-    @apply border border-gold text-gold font-semibold rounded-xl px-6 py-3 active:scale-95 transition-transform;
+    @apply border border-gold/40 text-gold font-semibold tracking-wide rounded-xl px-6 py-3 active:scale-95 transition-transform;
   }
 
   .tab-bar {

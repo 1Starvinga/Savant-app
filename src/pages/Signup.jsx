@@ -50,12 +50,12 @@ export default function Signup() {
       <div className="min-h-full bg-background flex flex-col justify-center px-6 py-12">
         <div className="mb-10 text-center">
           <p className="text-xs tracking-[0.3em] text-gray-500 uppercase mb-1">The</p>
-          <h1 className="text-4xl font-bold tracking-tight text-gold">SAVANT</h1>
+          <h1 className="font-display text-4xl text-gold tracking-wide">SAVANT</h1>
           <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mt-1">Stretch Method</p>
         </div>
         <div className="card max-w-sm w-full mx-auto text-center">
           <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8E4DC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
               <polyline points="22,6 12,13 2,6" />
             </svg>

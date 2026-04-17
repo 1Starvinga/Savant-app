@@ -36,7 +36,7 @@ export default function Login() {
       {/* Logo / Wordmark */}
       <div className="mb-10 text-center">
         <p className="text-xs tracking-[0.3em] text-gray-500 uppercase mb-1">The</p>
-        <h1 className="text-4xl font-bold tracking-tight text-gold">SAVANT</h1>
+        <h1 className="font-display text-4xl text-gold tracking-wide">SAVANT</h1>
         <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mt-1">Stretch Method</p>
       </div>
 

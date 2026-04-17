@@ -9,15 +9,17 @@ export default {
       colors: {
         background: '#0D0D0D',
         gold: {
-          DEFAULT: '#C9A84C',
-          light: '#E0C070',
-          dark: '#A07830',
+          DEFAULT: '#E8E4DC',
+          light: '#F2EFE9',
+          dark: '#C8C4BC',
         },
-        surface: '#1A1A1A',
-        border: '#2A2A2A',
+        surface: '#161616',
+        border: '#262626',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['BigRiver', 'Georgia', 'serif'],
+        script: ['BigRiverScript', 'Georgia', 'serif'],
       },
       borderRadius: {
         card: '1rem',

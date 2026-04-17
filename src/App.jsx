@@ -49,7 +49,7 @@ export default function App() {
       <div className="h-full bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-xs tracking-[0.3em] text-gray-500 uppercase mb-1">The</p>
-          <h1 className="text-3xl font-bold text-gold tracking-tight">SAVANT</h1>
+          <h1 className="font-display text-4xl text-gold tracking-wide">SAVANT</h1>
           <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mt-1">Stretch Method</p>
           <div className="mt-8 flex justify-center">
             <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />

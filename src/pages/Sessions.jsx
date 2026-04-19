@@ -17,8 +17,35 @@ export default function Sessions() {
           <HamburgerMenu />
         </div>
         <div className="h-px bg-border mb-6" />
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-2 mb-6">
+          <button
+            onClick={() => navigate('/clients')}
+            className="btn-gold w-full"
+          >
+            New Session
+          </button>
+          <button
+            onClick={() => navigate('/diagnostic')}
+            className="btn-outline w-full"
+          >
+            Start New Assessment
+          </button>
+        </div>
+
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-xl mb-6"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" className="flex-none">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p className="text-xs text-gray-500">Select a client to open their session record</p>
+        </div>
+
         <div className="card text-center py-12">
-          <p className="text-gray-400 text-sm">Session builder coming in Phase 1</p>
+          <p className="text-gray-400 text-sm">Session history coming in Phase 1</p>
         </div>
       </div>
     </div>

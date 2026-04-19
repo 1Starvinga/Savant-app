@@ -489,10 +489,16 @@ export default function ClientProfile() {
     setShowEdit(false)
   }
 
+  const hasCompleteSessions = assessments.some(a => a.status === 'complete')
+
   function startNewAssessment() {
     navigate('/diagnostic', {
       state: { preselectedClient: client },
     })
+  }
+
+  function startNewSession() {
+    navigate(`/clients/${client.id}/session`)
   }
 
   if (loading) {
@@ -614,13 +620,21 @@ export default function ClientProfile() {
           )}
         </div>
 
-        {/* Start New Assessment */}
-        <button
-          onClick={startNewAssessment}
-          className="btn-gold w-full mb-6"
-        >
-          Start New Assessment
-        </button>
+        {/* Session action buttons */}
+        {hasCompleteSessions ? (
+          <div className="flex flex-col gap-2 mb-6">
+            <button onClick={startNewSession} className="btn-gold w-full">
+              New Session
+            </button>
+            <button onClick={startNewAssessment} className="btn-outline w-full">
+              Start New Assessment
+            </button>
+          </div>
+        ) : (
+          <button onClick={startNewAssessment} className="btn-gold w-full mb-6">
+            First Assessment
+          </button>
+        )}
 
         {/* Assessments section */}
         <div className="mb-3 flex items-center justify-between">

@@ -267,7 +267,7 @@ function computeSuggestions(note, stretches) {
 
 // ─── Intake Note Screen ────────────────────────────────────────
 
-function IntakeScreen({ client, onBegin, onBack }) {
+function IntakeScreen({ client, onBegin, onBack, lastEndNote }) {
   const [note, setNote] = useState('')
 
   return (
@@ -290,6 +290,20 @@ function IntakeScreen({ client, onBegin, onBack }) {
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
+
+        {/* Last session note context */}
+        {lastEndNote && (
+          <div
+            className="mb-5 px-4 py-3 rounded-2xl"
+            style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '2px solid rgba(98,245,236,0.3)' }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#62F5EC' }}>
+              Last Session
+            </p>
+            <p className="text-sm text-gray-400 leading-relaxed">{lastEndNote}</p>
+          </div>
+        )}
+
         <div className="mb-5">
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#F0EFED' }}>Before You Begin</p>
           <p className="text-sm text-gray-400 leading-relaxed">Document what the client is reporting before the session starts.</p>
@@ -1157,6 +1171,7 @@ export default function DiagnosticSession() {
         client={client}
         onBegin={handleIntakeComplete}
         onBack={() => setScreen('setup')}
+        lastEndNote={location.state?.lastEndNote ?? null}
       />
     )
   }

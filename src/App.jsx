@@ -10,6 +10,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import DiagnosticSession from './pages/DiagnosticSession'
 import ClientProfile from './pages/ClientProfile'
+import ClientSession from './pages/ClientSession'
 import heroImg from './assets/hero.jpg'
 
 const bgStyle = {
@@ -40,6 +41,7 @@ function AuthedApp() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/diagnostic" element={<DiagnosticSession />} />
           <Route path="/clients/:id" element={<ClientProfile />} />
+          <Route path="/clients/:id/session" element={<ClientSession />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <BottomNav />

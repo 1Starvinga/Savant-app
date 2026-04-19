@@ -7,13 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0D0D0D',
-        gold: {
-          DEFAULT: '#D4CFC7',
-          light: '#E2DED8',
-          dark: '#ABA7A0',
+        background: '#0A0A0A',
+        accent: {
+          DEFAULT: '#5B8A8A',
+          light: '#7AABAB',
+          dark: '#3D6B6B',
         },
-        surface: '#161616',
+        surface: '#121212',
         border: '#262626',
       },
       fontFamily: {

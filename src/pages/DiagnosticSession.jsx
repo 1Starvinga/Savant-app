@@ -68,8 +68,10 @@ const ROM_OPTIONS = [
   {
     value: 'restricted',
     label: 'Restricted',
-    idle:   'bg-gold/10 text-gold border-gold/20',
-    active: 'bg-gold text-black border-gold',
+    idle:   '',
+    active: 'text-black',
+    idleStyle:   { backgroundColor: 'rgba(91,138,138,0.1)', color: '#F0EFED', borderColor: 'rgba(91,138,138,0.2)' },
+    activeStyle: { backgroundColor: '#62F5EC', borderColor: '#62F5EC', color: '#0A0A0A' },
   },
   {
     value: 'severely_restricted',
@@ -121,9 +123,13 @@ function normalizeFindings(raw, stretches) {
 
 function romBadgeClass(rom) {
   if (rom === 'normal')              return 'bg-emerald-500/15 text-emerald-400'
-  if (rom === 'restricted')          return 'bg-gold/15 text-gold'
+  if (rom === 'restricted')          return ''
   if (rom === 'severely_restricted') return 'bg-red-500/15 text-red-400'
   return 'bg-border text-gray-500'
+}
+function romBadgeStyle(rom) {
+  if (rom === 'restricted') return { backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' }
+  return {}
 }
 
 // ─── Setup Screen ─────────────────────────────────────────────
@@ -159,7 +165,7 @@ function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
         </button>
 
         <div className="mb-8">
-          <p className="text-xs tracking-widest text-gold uppercase mb-1">Savant Method</p>
+          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#F0EFED' }}>Savant Method</p>
           <h1 className="text-3xl font-bold text-white">Diagnostic Assessment</h1>
           <p className="text-sm text-gray-400 mt-2">9-phase full-body evaluation · 43 stretches</p>
         </div>
@@ -168,7 +174,7 @@ function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
           <div className="grid grid-cols-3 gap-4 text-center">
             {[['9', 'Phases'], ['43', 'Stretches'], ['~45', 'Minutes']].map(([val, label]) => (
               <div key={label}>
-                <p className="text-xl font-bold text-gold">{val}</p>
+                <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{val}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{label}</p>
               </div>
             ))}
@@ -179,12 +185,12 @@ function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
           <label className="block text-xs font-medium text-gray-400 mb-3">Select Client</label>
           {loading ? (
             <div className="flex justify-center py-6">
-              <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: '#F0EFED', borderTopColor: 'transparent' }} />
             </div>
           ) : clients.length === 0 ? (
             <div className="card text-center py-6">
               <p className="text-sm text-gray-400">No active clients yet.</p>
-              <button onClick={() => navigate('/clients')} className="text-gold text-sm mt-2">Add a client →</button>
+              <button onClick={() => navigate('/clients')} className="text-sm mt-2" style={{ color: '#F0EFED' }}>Add a client →</button>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -192,18 +198,17 @@ function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
                 <button
                   key={c.id}
                   onClick={() => setSelected(c)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left ${
-                    selected?.id === c.id ? 'border-gold bg-gold/10' : 'border-border bg-surface'
-                  }`}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface transition-colors text-left"
+                  style={selected?.id === c.id ? { background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderColor: 'rgba(91,138,138,0.5)' } : {}}
                 >
-                  <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-                    <span className="text-gold text-xs font-bold">{c.first_name[0]}{c.last_name[0]}</span>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+                    <span className="text-xs font-bold" style={{ color: '#F0EFED' }}>{c.first_name[0]}{c.last_name[0]}</span>
                   </div>
-                  <span className={`text-sm font-medium ${selected?.id === c.id ? 'text-gold' : 'text-white'}`}>
+                  <span className={`text-sm font-medium ${selected?.id === c.id ? '' : 'text-white'}`} style={selected?.id === c.id ? { color: '#F0EFED' } : {}}>
                     {c.first_name} {c.last_name}
                   </span>
                   {selected?.id === c.id && (
-                    <svg className="ml-auto text-gold" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg className="ml-auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F0EFED" strokeWidth="2.5">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   )}
@@ -225,6 +230,164 @@ function SetupScreen({ onBegin, preselectedClient, stretchesLoading }) {
   )
 }
 
+// ─── Keyword → Suggestion Logic ──────────────────────────────
+
+const BODY_KEYWORDS = [
+  'shoulder', 'rotator', 'pectoral', 'pec',
+  'hip', 'psoas', 'flexor', 'groin', 'piriformis',
+  'knee', 'quad', 'quadricep',
+  'hamstring',
+  'back', 'lumbar', 'spine', 'thoracic',
+  'neck', 'cervical',
+  'calf', 'ankle', 'achilles',
+  'glute', 'it band', 'iliotibial',
+  'wrist', 'elbow', 'forearm',
+  'chest', 'lat',
+]
+
+function computeSuggestions(note, stretches) {
+  if (!note.trim() || !stretches.length) return []
+  const lower = note.toLowerCase()
+  const foundKws = BODY_KEYWORDS.filter(kw => lower.includes(kw))
+  if (!foundKws.length) return []
+
+  const matched = []
+  for (const stretch of stretches) {
+    const muscles = Array.isArray(stretch.primary_muscles)
+      ? stretch.primary_muscles.join(' ')
+      : (stretch.primary_muscles ?? '')
+    const haystack = [stretch.name, stretch.body_region, muscles].join(' ').toLowerCase()
+    if (foundKws.some(kw => haystack.includes(kw))) {
+      matched.push(stretch.name)
+      if (matched.length >= 3) break
+    }
+  }
+  return matched
+}
+
+// ─── Intake Note Screen ────────────────────────────────────────
+
+function IntakeScreen({ client, onBegin, onBack }) {
+  const [note, setNote] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-10 bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex-none flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border bg-surface">
+        <button
+          onClick={onBack}
+          className="w-9 h-9 rounded-full border border-border flex items-center justify-center flex-none active:scale-90 transition-transform"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div>
+          <h1 className="text-base font-bold text-white">{client.first_name} {client.last_name}</h1>
+          <p className="text-xs text-gray-500">Session Intake</p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#F0EFED' }}>Before You Begin</p>
+          <p className="text-sm text-gray-400 leading-relaxed">Document what the client is reporting before the session starts.</p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-2">
+            Session notes — what is the client reporting today?
+          </label>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="e.g. Tightness in left shoulder, hip flexor soreness from running, lower back pain…"
+            rows={6}
+            autoFocus
+            className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none transition-colors resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div
+        className="flex-none border-t border-border bg-surface px-4 py-3"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
+        <button onClick={() => onBegin(note)} className="btn-gold w-full">
+          Begin Session →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── End Note Screen ───────────────────────────────────────────
+
+function EndNoteScreen({ client, onSave, onBack, saving }) {
+  const [note, setNote] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-10 bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex-none flex items-center gap-3 px-4 pt-4 pb-4 border-b border-border bg-surface">
+        <button
+          onClick={onBack}
+          className="w-9 h-9 rounded-full border border-border flex items-center justify-center flex-none active:scale-90 transition-transform"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div>
+          <h1 className="text-base font-bold text-white">Session Complete</h1>
+          <p className="text-xs text-gray-500">{client.first_name} {client.last_name}</p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ABA8A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div className="mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#F0EFED' }}>Assessment Complete</p>
+          <p className="text-sm text-gray-400 leading-relaxed">Document your findings before saving the session record.</p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-2">
+            End of session notes — what did you find?
+          </label>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="e.g. Significant restriction in left shoulder internal rotation, hip flexors bilaterally tight, client responded well to the hamstring series…"
+            rows={6}
+            autoFocus
+            className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none transition-colors resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div
+        className="flex-none border-t border-border bg-surface px-4 py-3"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
+        <button
+          onClick={() => onSave(note)}
+          disabled={saving}
+          className="btn-gold w-full disabled:opacity-50 disabled:scale-100"
+        >
+          {saving ? 'Saving…' : 'Save Session'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Transition Screen ────────────────────────────────────────
 
 function TransitionScreen({ step, stepIdx, onReady, onBack, onExit }) {
@@ -234,7 +397,7 @@ function TransitionScreen({ step, stepIdx, onReady, onBack, onExit }) {
     <div className="fixed inset-0 z-10 bg-background flex flex-col">
       {/* Progress bar */}
       <div className="flex-none h-1 bg-border">
-        <div className="h-full bg-gold transition-all duration-300" style={{ width: `${progress}%` }} />
+        <div className="h-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: '#62F5EC', boxShadow: '0 0 8px rgba(98,245,236,0.3)' }} />
       </div>
 
       {/* Header */}
@@ -273,7 +436,7 @@ function TransitionScreen({ step, stepIdx, onReady, onBack, onExit }) {
 
         <div className="w-12 h-px bg-border mb-8" />
 
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gold mb-3">Position Change</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#F0EFED' }}>Position Change</p>
         <p className="text-base font-semibold text-white leading-snug mb-6">{step.instruction}</p>
 
         <div className="w-full max-w-xs bg-surface border border-border rounded-2xl px-5 py-4">
@@ -302,17 +465,24 @@ function FindingForm({ finding, onChange }) {
       <div>
         <p className="text-xs font-medium text-gray-400 mb-2">Range of Motion</p>
         <div className="flex gap-2">
-          {ROM_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => onChange('rom', finding.rom === opt.value ? null : opt.value)}
-              className={`flex-1 py-3 rounded-xl text-[11px] font-bold border transition-colors leading-tight ${
-                finding.rom === opt.value ? opt.active : opt.idle
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {ROM_OPTIONS.map(opt => {
+            const isActive = finding.rom === opt.value
+            const baseStyle = opt.idleStyle || opt.activeStyle
+              ? (isActive ? opt.activeStyle : opt.idleStyle)
+              : {}
+            return (
+              <button
+                key={opt.value}
+                onClick={() => onChange('rom', finding.rom === opt.value ? null : opt.value)}
+                className={`flex-1 py-3 rounded-xl text-[11px] font-bold border transition-colors leading-tight ${
+                  isActive ? opt.active : opt.idle
+                }`}
+                style={baseStyle}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -343,7 +513,7 @@ function FindingForm({ finding, onChange }) {
           value={finding.compensation}
           onChange={e => onChange('compensation', e.target.value)}
           placeholder="e.g. Posterior pelvic tilt, knee flexion…"
-          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
         />
       </div>
 
@@ -354,7 +524,7 @@ function FindingForm({ finding, onChange }) {
           onChange={e => onChange('notes', e.target.value)}
           placeholder="Additional observations…"
           rows={2}
-          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors resize-none"
+          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors resize-none"
         />
       </div>
     </div>
@@ -363,7 +533,7 @@ function FindingForm({ finding, onChange }) {
 
 // ─── Stretch Screen ───────────────────────────────────────────
 
-function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBack, onExit, saveStatus, stretchByNum }) {
+function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBack, onExit, saveStatus, stretchByNum, suggestions, onDismissSuggestions }) {
   const [showHowTo, setShowHowTo] = useState(false)
 
   const { phase, stretchNum } = step
@@ -407,7 +577,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
     <div className="fixed inset-0 z-10 bg-background flex flex-col">
       {/* Progress bar */}
       <div className="flex-none h-1 bg-border">
-        <div className="h-full bg-gold transition-all duration-300" style={{ width: `${progress}%` }} />
+        <div className="h-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: '#62F5EC', boxShadow: '0 0 8px rgba(98,245,236,0.3)' }} />
       </div>
 
       {/* Save status */}
@@ -419,7 +589,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
       {/* Header */}
       <div className="flex-none bg-surface border-b border-border px-4 pt-2 pb-3">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-gold">
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#F0EFED' }}>
             {phase.label}
           </p>
           <div className="flex items-center gap-2">
@@ -437,14 +607,14 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
         </div>
 
         <div className="flex items-start gap-2">
-          <span className="text-2xl font-bold text-gold leading-none flex-none mt-0.5">
+          <span className="text-2xl font-bold leading-none flex-none mt-0.5" style={{ color: '#F0EFED' }}>
             {String(stretchNum).padStart(2, '0')}
           </span>
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-white leading-tight">{stretch?.name}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {stretch?.body_region && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gold/10 text-gold">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(91,138,138,0.1)', color: '#F0EFED' }}>
                   {stretch.body_region}
                 </span>
               )}
@@ -462,10 +632,35 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-5 space-y-5">
 
+          {/* Mid-session suggestions banner */}
+          {suggestions && suggestions.length > 0 && (
+            <div
+              className="flex items-start gap-3 px-3 py-2.5 rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#62F5EC' }}>
+                  Based on intake note
+                </p>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Pay attention to: <span className="text-white font-medium">{suggestions.join(', ')}</span>
+                </p>
+              </div>
+              <button
+                onClick={onDismissSuggestions}
+                className="flex-none mt-0.5 active:scale-90 transition-transform"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Narrative — only on right-side or no-side phases (first encounter) */}
           {phase.side !== 'left' && stretch?.narrative && (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-1.5">Purpose</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#F0EFED' }}>Purpose</p>
               <p className="text-sm text-gray-300 leading-relaxed">{stretch.narrative}</p>
             </div>
           )}
@@ -477,10 +672,10 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
                 onClick={() => setShowHowTo(v => !v)}
                 className="flex items-center justify-between w-full text-left"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-gold">How to Perform</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#F0EFED' }}>How to Perform</p>
                 <svg
                   width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="#D4CFC7" strokeWidth="2"
+                  stroke="#F0EFED" strokeWidth="2"
                   className={`transition-transform ${showHowTo ? 'rotate-180' : ''}`}
                 >
                   <polyline points="6 9 12 15 18 9"/>
@@ -490,7 +685,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
                 <ol className="mt-2 space-y-2">
                   {howToSteps.map((s, i) => (
                     <li key={i} className="flex gap-3 text-sm text-gray-300 leading-relaxed">
-                      <span className="flex-none w-5 h-5 rounded-full bg-gold/15 text-gold text-[10px] font-bold flex items-center justify-center mt-0.5">
+                      <span className="flex-none w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center mt-0.5" style={{ backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' }}>
                         {i + 1}
                       </span>
                       {s}
@@ -508,7 +703,7 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
                 Right Side Result
               </p>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${romBadgeClass(oppositeFinding.rom)}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${romBadgeClass(oppositeFinding.rom)}`} style={romBadgeStyle(oppositeFinding.rom)}>
                   {ROM_LABEL[oppositeFinding.rom]}
                 </span>
                 {oppositeFinding.painPresent === true && (
@@ -546,9 +741,11 @@ function StretchScreen({ step, stepIdx, findings, setFindings, onAdvance, onGoBa
         </button>
         <button
           onClick={() => onAdvance(isLast)}
-          className={`flex-1 py-3 rounded-xl text-sm font-bold active:scale-95 transition-transform ${
-            isLast ? 'bg-gold text-black' : 'bg-gold/20 text-gold border border-gold/30'
-          }`}
+          className="flex-1 py-3 text-sm font-bold active:scale-95 transition-transform"
+          style={isLast
+            ? { background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' }
+            : { background: 'rgba(91,138,138,0.08)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.25)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' }
+          }
         >
           {nextLabel}
         </button>
@@ -610,8 +807,8 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
 
           <div className="card">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-                <span className="text-gold font-bold">{client.first_name[0]}{client.last_name[0]}</span>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+                <span className="font-bold" style={{ color: '#F0EFED' }}>{client.first_name[0]}{client.last_name[0]}</span>
               </div>
               <div>
                 <p className="font-semibold text-white">{client.first_name} {client.last_name}</p>
@@ -620,7 +817,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
             </div>
             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
               <div className="text-center">
-                <p className="text-xl font-bold text-gold">{totalAssessed}</p>
+                <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{totalAssessed}</p>
                 <p className="text-[10px] text-gray-500 mt-0.5">Sides Assessed</p>
               </div>
               <div className="text-center">
@@ -628,7 +825,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
                 <p className="text-[10px] text-gray-500 mt-0.5">Restrictions</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-amber-400">{painCount}</p>
+                <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{painCount}</p>
                 <p className="text-[10px] text-gray-500 mt-0.5">Pain Sites</p>
               </div>
             </div>
@@ -642,14 +839,14 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
               <div className="space-y-2">
                 {restrictions.map(({ stretch, side, entry }) => (
                   <div key={`${stretch.stretch_number}-${side}`} className="card flex items-start gap-3 py-3">
-                    <span className="text-sm font-bold text-gold w-7 flex-none">
+                    <span className="text-sm font-bold w-7 flex-none" style={{ color: '#F0EFED' }}>
                       {String(stretch.stretch_number).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-white">{stretch.name}</p>
                         <span className="text-[10px] text-gray-500 capitalize">{side}</span>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`} style={romBadgeStyle(entry.rom)}>
                           {ROM_LABEL[entry.rom]}
                         </span>
                         {entry.painPresent && (
@@ -669,7 +866,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
           )}
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#F0EFED' }}>
               All Findings ({assessedStretches.length} stretches)
             </p>
             <div className="space-y-2">
@@ -678,7 +875,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
                 return (
                   <div key={stretch.stretch_number} className="card py-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-gold w-6">
+                      <span className="text-xs font-bold w-6" style={{ color: '#F0EFED' }}>
                         {String(stretch.stretch_number).padStart(2, '0')}
                       </span>
                       <p className="text-sm font-medium text-white flex-1">{stretch.name}</p>
@@ -691,7 +888,7 @@ function SummaryScreen({ findings, client, onSave, onBack, saving, stretches }) 
                         return (
                           <div key={side} className="flex items-center gap-1.5">
                             <span className="text-[10px] text-gray-500 capitalize">{side}</span>
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`} style={romBadgeStyle(entry.rom)}>
                               {ROM_LABEL[entry.rom]}
                             </span>
                             {entry.painPresent && <span className="text-[10px] text-red-400">· Pain</span>}
@@ -754,6 +951,11 @@ export default function DiagnosticSession() {
   const [saved, setSaved]                   = useState(false)
   const [saveStatus, setSaveStatus]         = useState('')
 
+  // Notes
+  const [intakeNote, setIntakeNote]         = useState('')
+  const [endNote, setEndNote]               = useState('')
+  const [suggestions, setSuggestions]       = useState([])
+
   const assessmentIdRef = useRef(null)
   const [assessmentId, setAssessmentId] = useState(null)
   useEffect(() => { assessmentIdRef.current = assessmentId }, [assessmentId])
@@ -762,7 +964,7 @@ export default function DiagnosticSession() {
   useEffect(() => {
     supabase
       .from('stretches')
-      .select('id, stretch_number, name, body_region, narrative, setup_execution')
+      .select('id, stretch_number, name, body_region, primary_muscles, narrative, setup_execution')
       .order('stretch_number')
       .then(({ data }) => {
         setStretches(data ?? [])
@@ -800,6 +1002,15 @@ export default function DiagnosticSession() {
     setCurrentStepIdx(0)
     assessmentIdRef.current = null
     setAssessmentId(null)
+    setIntakeNote('')
+    setEndNote('')
+    setSuggestions([])
+    setScreen('intake')
+  }
+
+  function handleIntakeComplete(note) {
+    setIntakeNote(note)
+    setSuggestions(computeSuggestions(note, stretches))
     setScreen('assessment')
   }
 
@@ -841,7 +1052,7 @@ export default function DiagnosticSession() {
   async function handleAdvance(isLastStretch = false) {
     if (isLastStretch) {
       await autoSave(findings, currentStepIdx, 'complete')
-      setScreen('summary')
+      setScreen('end-note')
     } else {
       const step = SEQUENCE[currentStepIdx]
       if (step.type === 'stretch') {
@@ -860,9 +1071,10 @@ export default function DiagnosticSession() {
     navigate('/', { state: { savedMessage: 'Assessment saved. You can resume from where you left off.' } })
   }
 
-  async function handleSave() {
+  async function handleSave(note) {
     if (!profile?.id || !client?.id) return
     setSaving(true)
+    setEndNote(note)
 
     const restrictions = []
     stretches.forEach(s => {
@@ -877,13 +1089,15 @@ export default function DiagnosticSession() {
       ? `${restrictions.length} restriction(s) found: ${restrictions.slice(0, 5).join('; ')}${restrictions.length > 5 ? '…' : ''}`
       : 'No restrictions found.'
 
-    if (assessmentIdRef.current) {
+    let finalAssessmentId = assessmentIdRef.current
+
+    if (finalAssessmentId) {
       await supabase
         .from('assessments')
         .update({ summary, findings, findings_data: findings, status: 'complete' })
-        .eq('id', assessmentIdRef.current)
+        .eq('id', finalAssessmentId)
     } else {
-      await supabase.from('assessments').insert({
+      const { data } = await supabase.from('assessments').insert({
         client_id:       client.id,
         practitioner_id: profile.id,
         session_id:      null,
@@ -891,8 +1105,18 @@ export default function DiagnosticSession() {
         findings_data:   findings,
         summary,
         status:          'complete',
-      })
+      }).select('id').single()
+      finalAssessmentId = data?.id ?? null
     }
+
+    // Save session notes record
+    await supabase.from('session_notes').insert({
+      session_id:       finalAssessmentId,
+      client_id:        client.id,
+      practitioner_id:  profile.id,
+      intake_note:      intakeNote,
+      end_note:         note,
+    })
 
     setSaving(false)
     setSaved(true)
@@ -927,6 +1151,27 @@ export default function DiagnosticSession() {
     )
   }
 
+  if (screen === 'intake') {
+    return (
+      <IntakeScreen
+        client={client}
+        onBegin={handleIntakeComplete}
+        onBack={() => setScreen('setup')}
+      />
+    )
+  }
+
+  if (screen === 'end-note') {
+    return (
+      <EndNoteScreen
+        client={client}
+        onSave={handleSave}
+        onBack={() => setScreen('assessment')}
+        saving={saving}
+      />
+    )
+  }
+
   if (screen === 'assessment') {
     const step = SEQUENCE[currentStepIdx]
 
@@ -953,6 +1198,8 @@ export default function DiagnosticSession() {
         onExit={handleExit}
         saveStatus={saveStatus}
         stretchByNum={stretchByNum}
+        suggestions={suggestions}
+        onDismissSuggestions={() => setSuggestions([])}
       />
     )
   }

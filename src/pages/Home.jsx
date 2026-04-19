@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import heroImg from '../assets/hero.jpg'
+import savantSymbol from '../assets/savant-symbol.png'
+import HamburgerMenu from '../components/HamburgerMenu'
 
 export default function Home() {
   const navigate          = useNavigate()
@@ -82,86 +83,105 @@ export default function Home() {
 
   return (
     <div className="page-container">
+      <div className="pb-4">
 
-      {/* Hero image — full-width, top ~third of screen */}
-      <div className="relative w-full h-[33vh] flex-none">
-        <img
-          src={heroImg}
-          alt=""
-          className="w-full h-full object-cover"
-        />
-        {/* Gradient: slight scrim at top for legibility → transparent mid → solid background at bottom */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(13,13,13,0) 40%, #0D0D0D 100%)',
-          }}
-        />
-      </div>
+        {/* Header row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative' }}>
 
-      <div className="px-4 pb-4">
+          {/* Savant symbol — left */}
+          <button
+            onClick={() => navigate('/')}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
+          >
+            <img
+              src={savantSymbol}
+              alt="Savant"
+              style={{ height: '52px', width: 'auto', display: 'block', mixBlendMode: 'screen' }}
+            />
+          </button>
+
+          {/* SAVANT wordmark — absolutely centered */}
+          <h1
+            className="font-display tracking-[0.2em] uppercase"
+            style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', color: '#F0EFED', fontSize: '40px', fontWeight: 700, textShadow: 'none', pointerEvents: 'none' }}
+          >
+            SAVANT
+          </h1>
+
+          {/* Hamburger menu — right */}
+          <HamburgerMenu />
+
+        </div>
+
+        <div className="px-4">
+
+        {/* Teal divider */}
+        <div style={{ height: '1px', backgroundColor: 'rgba(91,138,138,0.3)', marginBottom: '240px' }} />
 
         {/* Saved message toast */}
         {savedMessage ? (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-3">
+          <div className="mb-2 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ABA8A" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             <p className="text-sm text-emerald-400 flex-1">{savedMessage}</p>
           </div>
         ) : null}
 
-        {/* In-progress assessment banner */}
-        {inProgress && inProgress.clients ? (
-          <div className="mb-5 px-4 py-3 rounded-xl bg-gold/10 border border-gold/30 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gold uppercase tracking-widest mb-0.5">
-                Assessment in progress
-              </p>
-              <p className="text-sm text-white truncate">
-                {inProgress.clients.first_name} {inProgress.clients.last_name}
-                <span className="text-gray-400">
-                  {' '}· Step {(inProgress.current_stretch_index ?? 0) + 1} of 47
-                </span>
-              </p>
-            </div>
-            <button
-              onClick={resumeAssessment}
-              className="flex-none text-xs font-semibold text-black bg-gold rounded-lg px-3 py-1.5 active:scale-95 transition-transform"
-            >
-              Resume
-            </button>
+        {/* Instrument cluster: greeting + assessment banner + stats */}
+        <div className="mb-3" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+
+          {/* Header */}
+          <div>
+            <p className="text-sm italic" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 300, marginBottom: '2px' }}>{greeting},</p>
+            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.1 }}>{displayName}</h1>
           </div>
-        ) : null}
 
-        {/* Header */}
-        <div className="mb-6">
-          <p className="text-sm text-gray-400 mb-1">{greeting},</p>
-          <h1 className="text-2xl font-bold text-white">{displayName}</h1>
-          <div className="mt-2 h-px bg-border" />
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {stats.map((stat) => (
-            <div key={stat.label} className="card text-center">
-              <p className="text-xl font-bold text-gold">{stat.value}</p>
-              <p className="text-[10px] text-gray-400 mt-1 leading-tight">{stat.label}</p>
+          {/* In-progress assessment banner */}
+          {inProgress && inProgress.clients ? (
+            <div className="px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '2px solid rgba(98,245,236,0.3)', borderRadius: '16px' }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: '#F0EFED' }}>
+                  Assessment in progress
+                </p>
+                <p className="text-sm text-white truncate">
+                  {inProgress.clients.first_name} {inProgress.clients.last_name}
+                  <span className="text-gray-400">
+                    {' '}· Step {(inProgress.current_stretch_index ?? 0) + 1} of 47
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={resumeAssessment}
+                className="flex-none text-xs font-semibold active:scale-95 transition-transform px-3 py-1.5" style={{ background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' }}
+              >
+                Resume
+              </button>
             </div>
-          ))}
-        </div>
+          ) : null}
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2">
+            {stats.map((stat) => (
+              <div key={stat.label} className="card text-center" style={{ padding: '12px', borderTop: '1px solid rgba(91,138,138,0.4)' }}>
+                <p className="font-bold" style={{ fontSize: '24px', color: '#62F5EC', textShadow: '0 0 16px rgba(98,245,236,0.8)' }}>{stat.value}</p>
+                <p className="text-gray-400 mt-1 leading-tight" style={{ fontSize: '11px' }}>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+        </div>{/* end instrument cluster */}
 
         {/* Upcoming sessions */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-white">Upcoming Sessions</h2>
-          <button className="text-xs text-gold">View all</button>
+          <button className="text-xs active:scale-95 transition-transform px-2.5 py-1" style={{ background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' }}>View all</button>
         </div>
 
         <div className="space-y-3">
           {upcomingSessions.map((session) => (
-            <div key={session.id} className="card flex items-center justify-between">
+            <div key={session.id} className="card flex items-center justify-between" style={{ borderLeft: '2px solid rgba(98,245,236,0.3)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
-                  <span className="text-gold text-sm font-semibold">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+                  <span className="text-sm font-semibold" style={{ color: '#F0EFED' }}>
                     {session.client.charAt(0)}
                   </span>
                 </div>
@@ -170,7 +190,7 @@ export default function Home() {
                   <p className="text-xs text-gray-400">{session.date} · {session.time}</p>
                 </div>
               </div>
-              <button className="text-xs text-gold border border-gold/30 rounded-lg px-3 py-1">
+              <button className="text-xs active:scale-95 transition-transform px-3 py-1" style={{ background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' }}>
                 View
               </button>
             </div>
@@ -185,9 +205,9 @@ export default function Home() {
             {/* Start Diagnostic */}
             <button
               onClick={() => navigate('/diagnostic')}
-              className="card flex flex-col items-center gap-2 py-5 active:scale-95 transition-transform border-gold/30"
+              className="card flex flex-col items-center gap-2 py-5 active:scale-95 transition-transform" style={{ borderColor: 'rgba(91,138,138,0.3)' }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4CFC7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0EFED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 11l3 3L22 4"/>
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
               </svg>
@@ -199,7 +219,7 @@ export default function Home() {
               onClick={() => navigate('/clients')}
               className="card flex flex-col items-center gap-2 py-5 active:scale-95 transition-transform"
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4CFC7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0EFED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="8.5" cy="7" r="4" />
                 <line x1="20" y1="8" x2="20" y2="14" />
@@ -209,7 +229,8 @@ export default function Home() {
             </button>
 
           </div>
-        </div>
+        </div>{/* end quick actions */}
+        </div>{/* end px-4 */}
       </div>
     </div>
   )

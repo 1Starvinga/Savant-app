@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import savantSymbol from '../assets/savant-symbol.png'
+import HamburgerMenu from '../components/HamburgerMenu'
 
 export default function Profile() {
+  const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
@@ -23,18 +27,25 @@ export default function Profile() {
 
   return (
     <div className="page-container">
-      <div className="px-4 pt-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Profile</h1>
+      <div className="px-4 pb-4">
+        {/* Header row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px', paddingBottom: '12px', position: 'relative' }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
+            <img src={savantSymbol} alt="Savant" style={{ height: '52px', width: 'auto', display: 'block', mixBlendMode: 'screen' }} />
+          </button>
+          <h1 className="text-2xl font-bold text-white" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>Profile</h1>
+          <HamburgerMenu />
+        </div>
         <div className="h-px bg-border mb-6" />
 
         {/* Practitioner card */}
         <div className="card flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-            <span className="text-gold text-lg font-bold">{initials}</span>
+          <div className="w-14 h-14 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+            <span className="text-lg font-bold" style={{ color: '#F0EFED' }}>{initials}</span>
           </div>
           <div>
             <p className="font-semibold text-white">{displayName}</p>
-            <p className="text-xs text-gold mt-0.5">Savant Certified · Practitioner</p>
+            <p className="text-xs mt-0.5" style={{ color: '#F0EFED' }}>Savant Certified · Practitioner</p>
             {user?.email && displayName !== user.email && (
               <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
             )}

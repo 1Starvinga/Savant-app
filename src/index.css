@@ -1,3 +1,7 @@
+:root {
+  --color-accent: #5B8A8A;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,8 +35,8 @@
   }
 
   body {
-    background-color: #0D0D0D;
-    color: #FFFFFF;
+    background-color: #0A0A0A;
+    color: #F0EFED;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -41,26 +45,46 @@
 
 @layer components {
   .card {
-    @apply bg-surface rounded-card border border-border p-4;
+    @apply p-4;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
   }
 
   .btn-gold {
-    @apply bg-gold text-[#0D0D0D] font-semibold tracking-wide rounded-xl px-6 py-3 active:scale-95 transition-transform;
+    @apply font-semibold tracking-wide px-6 py-3 active:scale-95 transition-transform;
+    background: rgba(91, 138, 138, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(91, 138, 138, 0.4);
+    color: #62F5EC;
+    text-shadow: 0 0 8px rgba(98, 245, 236, 0.25);
+    border-radius: 12px;
   }
 
   .btn-outline {
-    @apply border border-gold/40 text-gold font-semibold tracking-wide rounded-xl px-6 py-3 active:scale-95 transition-transform;
+    @apply font-semibold tracking-wide px-6 py-3 active:scale-95 transition-transform;
+    background: rgba(91, 138, 138, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(91, 138, 138, 0.25);
+    color: #62F5EC;
+    text-shadow: 0 0 8px rgba(98, 245, 236, 0.25);
+    border-radius: 12px;
   }
 
   .tab-bar {
-    @apply fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex items-center justify-around;
+    @apply fixed bottom-0 left-0 right-0 flex items-center justify-around;
     padding-bottom: env(safe-area-inset-bottom);
-    height: calc(4rem + env(safe-area-inset-bottom));
+    height: calc(4.5rem + env(safe-area-inset-bottom));
   }
 
   .page-container {
     @apply h-full overflow-y-auto;
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
     padding-top: env(safe-area-inset-top);
   }
 

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { stretchLibrary } from '../data/stretchLibrary'
+import savantSymbol from '../assets/savant-symbol.png'
+import HamburgerMenu from '../components/HamburgerMenu'
 
 // ─── Constants ─────────────────────────────────────────────────
 
@@ -48,9 +50,13 @@ function normalizeFindings(raw) {
 
 function romBadgeClass(rom) {
   if (rom === 'normal')              return 'bg-emerald-500/15 text-emerald-400'
-  if (rom === 'restricted')          return 'bg-gold/15 text-gold'
+  if (rom === 'restricted')          return ''
   if (rom === 'severely_restricted') return 'bg-red-500/15 text-red-400'
   return 'bg-border text-gray-500'
+}
+function romBadgeStyle(rom) {
+  if (rom === 'restricted') return { backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' }
+  return {}
 }
 
 // ─── Field (shared input component) ────────────────────────────
@@ -65,7 +71,7 @@ function Field({ label, name, value, onChange, placeholder, type = 'text' }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
       />
     </div>
   )
@@ -151,7 +157,7 @@ function EditClientModal({ client, onClose, onSaved }) {
               onChange={handleChange}
               placeholder="Goals, injuries, focus areas…"
               rows={3}
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors resize-none"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors resize-none"
             />
           </div>
 
@@ -250,8 +256,10 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
               isComplete
                 ? 'bg-emerald-500/15 text-emerald-400'
-                : 'bg-gold/15 text-gold'
-            }`}>
+                : ''
+            }`}
+            style={!isComplete ? { backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' } : {}}
+            >
               {isComplete ? 'Complete' : 'In Progress'}
             </span>
           </div>
@@ -265,7 +273,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
           <div className="card">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <p className="text-xl font-bold text-gold">{totalAssessed}</p>
+                <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{totalAssessed}</p>
                 <p className="text-[10px] text-gray-500 mt-0.5">Sides Assessed</p>
               </div>
               <div>
@@ -273,7 +281,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
                 <p className="text-[10px] text-gray-500 mt-0.5">Restrictions</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-amber-400">{painCount}</p>
+                <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{painCount}</p>
                 <p className="text-[10px] text-gray-500 mt-0.5">Pain Sites</p>
               </div>
             </div>
@@ -286,8 +294,8 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
 
           {/* In-progress notice */}
           {!isComplete && (
-            <div className="px-4 py-3 rounded-xl bg-gold/10 border border-gold/30">
-              <p className="text-xs text-gold">
+            <div className="px-4 py-3 rounded-xl" style={{ backgroundColor: 'rgba(91,138,138,0.1)', border: '1px solid rgba(91,138,138,0.3)' }}>
+              <p className="text-xs" style={{ color: '#F0EFED' }}>
                 Assessment paused at step {(assessment.current_stretch_index ?? 0) + 1} of 47.
                 Findings shown below are recorded so far.
               </p>
@@ -303,14 +311,14 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
               <div className="space-y-2">
                 {restrictions.map(({ stretch, side, entry }) => (
                   <div key={`${stretch.id}-${side}`} className="card flex items-start gap-3 py-3">
-                    <span className="text-sm font-bold text-gold w-7 flex-none">
+                    <span className="text-sm font-bold w-7 flex-none" style={{ color: '#F0EFED' }}>
                       {String(stretch.id).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-white">{stretch.name}</p>
                         <span className="text-[10px] text-gray-500 capitalize">{side}</span>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`} style={romBadgeStyle(entry.rom)}>
                           {ROM_LABEL[entry.rom]}
                         </span>
                         {entry.painPresent && (
@@ -334,7 +342,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
 
           {/* All findings */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#F0EFED' }}>
               All Findings ({assessedStretches.length} of 24 stretches)
             </p>
             {assessedStretches.length === 0 ? (
@@ -346,7 +354,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
                   return (
                     <div key={stretch.id} className="card py-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-bold text-gold w-6">
+                        <span className="text-xs font-bold w-6" style={{ color: '#F0EFED' }}>
                           {String(stretch.id).padStart(2, '0')}
                         </span>
                         <p className="text-sm font-medium text-white flex-1">{stretch.name}</p>
@@ -359,7 +367,7 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
                           return (
                             <div key={side} className="flex items-center gap-1.5">
                               <span className="text-[10px] text-gray-500 capitalize">{side}</span>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`} style={romBadgeStyle(entry.rom)}>
                                 {ROM_LABEL[entry.rom]}
                               </span>
                               {entry.painPresent && (
@@ -416,18 +424,18 @@ function AssessmentRow({ assessment, onSelect }) {
       className="card w-full flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
     >
       {/* Status dot */}
-      <div className={`w-2.5 h-2.5 rounded-full flex-none ${
-        isComplete ? 'bg-emerald-500' : 'bg-gold animate-pulse'
-      }`} />
+      <div
+        className={`w-2.5 h-2.5 rounded-full flex-none ${isComplete ? 'bg-emerald-500' : 'animate-pulse'}`}
+        style={!isComplete ? { backgroundColor: '#F0EFED' } : {}}
+      />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-white">{date}</p>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-            isComplete
-              ? 'bg-emerald-500/15 text-emerald-400'
-              : 'bg-gold/15 text-gold'
-          }`}>
+          <span
+            className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${isComplete ? 'bg-emerald-500/15 text-emerald-400' : ''}`}
+            style={!isComplete ? { backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' } : {}}
+          >
             {isComplete ? 'Complete' : 'In Progress'}
           </span>
         </div>
@@ -490,7 +498,7 @@ export default function ClientProfile() {
   if (loading) {
     return (
       <div className="page-container flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: '#F0EFED', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -499,7 +507,7 @@ export default function ClientProfile() {
     return (
       <div className="page-container flex flex-col items-center justify-center px-6 text-center">
         <p className="text-sm text-gray-400 mb-4">Client not found.</p>
-        <button onClick={() => navigate('/clients')} className="text-gold text-sm">← Back to Clients</button>
+        <button onClick={() => navigate('/clients')} className="text-sm" style={{ color: '#F0EFED' }}>← Back to Clients</button>
       </div>
     )
   }
@@ -518,38 +526,39 @@ export default function ClientProfile() {
 
   return (
     <div className="page-container">
-      <div className="px-4 pt-8 pb-8">
+      <div className="px-4 pt-4 pb-8">
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => navigate('/clients')}
-            className="w-9 h-9 rounded-full border border-border flex items-center justify-center flex-none active:scale-90 transition-transform"
+            onClick={() => navigate('/')}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
+            <img src={savantSymbol} alt="Savant" style={{ height: '52px', width: 'auto', display: 'block', mixBlendMode: 'screen' }} />
           </button>
           <h1 className="text-lg font-bold text-white flex-1 truncate">
             {client.first_name} {client.last_name}
           </h1>
-          <button
-            onClick={() => setShowEdit(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-gold border border-gold/30 rounded-lg px-3 py-1.5 active:scale-95 transition-transform"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            Edit
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowEdit(true)}
+              className="flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 active:scale-95 transition-transform" style={{ color: '#F0EFED', border: '1px solid rgba(91,138,138,0.3)' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Edit
+            </button>
+            <HamburgerMenu />
+          </div>
         </div>
 
         {/* Client info card */}
         <div className="card mb-4">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-full bg-gold/20 flex items-center justify-center flex-none">
-              <span className="text-gold text-lg font-bold">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+              <span className="text-lg font-bold" style={{ color: '#F0EFED' }}>
                 {initials(client.first_name, client.last_name)}
               </span>
             </div>
@@ -599,7 +608,7 @@ export default function ClientProfile() {
           {/* Notes */}
           {client.notes && (
             <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-1.5">Notes</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#F0EFED' }}>Notes</p>
               <p className="text-sm text-gray-400 leading-relaxed">{client.notes}</p>
             </div>
           )}

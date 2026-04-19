@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import savantSymbol from '../assets/savant-symbol.png'
+import HamburgerMenu from '../components/HamburgerMenu'
 
 // ─── Region styles ─────────────────────────────────────────────
 
@@ -9,7 +12,7 @@ const REGION_STYLE = {
 }
 
 function regionStyle(region) {
-  return REGION_STYLE[region] ?? { bg: '#1C1C1C', text: '#D4CFC7' }
+  return REGION_STYLE[region] ?? { bg: '#1C1C1C', text: '#F0EFED' }
 }
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -55,7 +58,7 @@ function renderBullets(val) {
       <ul className="space-y-2">
         {list.map((item, i) => (
           <li key={i} className="flex gap-3">
-            <span className="text-gold mt-1 flex-none text-xs">◆</span>
+            <span className="mt-1 flex-none text-xs" style={{ color: '#F0EFED' }}>◆</span>
             <p className="text-sm text-gray-300 leading-relaxed">{item}</p>
           </li>
         ))}
@@ -78,7 +81,7 @@ function StretchCard({ stretch, number, onSelect }) {
       className="card flex flex-col justify-between text-left active:scale-95 transition-transform min-h-[140px] p-4"
     >
       {/* Number */}
-      <span className="text-2xl font-bold text-gold leading-none">
+      <span className="text-2xl font-bold leading-none" style={{ color: '#F0EFED' }}>
         {String(number).padStart(2, '0')}
       </span>
 
@@ -130,7 +133,7 @@ function SectionLabel({ region }) {
 function Section({ title, children }) {
   return (
     <div className="mb-6">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-gold mb-2">
+      <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#F0EFED' }}>
         {title}
       </p>
       {children}
@@ -156,7 +159,7 @@ function DetailView({ stretch, number, onBack }) {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-gold font-bold text-sm">
+            <span className="font-bold text-sm" style={{ color: '#F0EFED' }}>
               {String(number).padStart(2, '0')}
             </span>
             <h1 className="text-base font-bold text-white truncate">
@@ -225,6 +228,7 @@ function DetailView({ stretch, number, onBack }) {
 // ─── Main Page ─────────────────────────────────────────────────
 
 export default function Library() {
+  const navigate = useNavigate()
   const [stretches, setStretches]     = useState([])
   const [loading, setLoading]         = useState(true)
   const [error, setError]             = useState('')
@@ -280,12 +284,18 @@ export default function Library() {
     <div className="page-container">
       <div className="px-4 pt-8 pb-4">
 
-        {/* Header */}
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-white">Stretch Library</h1>
-          <p className="text-xs text-gray-500 mt-0.5">The 24 Fundamental Stretches</p>
+        {/* Header row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px', paddingBottom: '4px', position: 'relative' }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
+            <img src={savantSymbol} alt="Savant" style={{ height: '52px', width: 'auto', display: 'block', mixBlendMode: 'screen' }} />
+          </button>
+          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+            <h1 className="text-2xl font-bold text-white">Stretch Library</h1>
+            <p className="text-xs text-gray-500 mt-0.5">The 24 Fundamental Stretches</p>
+          </div>
+          <HamburgerMenu />
         </div>
-        <div className="h-px bg-border mb-4" />
+        <div className="h-px bg-border mb-4" style={{ marginTop: '8px' }} />
 
         {/* Filter pills */}
         {!loading && !error && (
@@ -294,11 +304,10 @@ export default function Library() {
               <button
                 key={region}
                 onClick={() => setActiveRegion(region)}
-                className={`flex-none text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                  activeRegion === region
-                    ? 'bg-gold text-black border-gold'
-                    : 'border-border text-gray-400'
+                className={`flex-none text-xs font-medium px-3 py-1.5 transition-colors ${
+                  activeRegion === region ? '' : 'border border-border text-gray-400'
                 }`}
+                style={activeRegion === region ? { background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', color: '#62F5EC', textShadow: '0 0 8px rgba(98,245,236,0.25)', borderRadius: '12px' } : { borderRadius: '999px' }}
               >
                 {region}
               </button>
@@ -309,7 +318,7 @@ export default function Library() {
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-16">
-            <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: '#F0EFED', borderTopColor: 'transparent' }} />
           </div>
         )}
 

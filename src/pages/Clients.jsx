@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import savantSymbol from '../assets/savant-symbol.png'
+import HamburgerMenu from '../components/HamburgerMenu'
 
 // ─── helpers ────────────────────────────────────────────────
 
@@ -95,7 +97,7 @@ function AddClientModal({ onClose, onSaved, practitionerId }) {
               onChange={handleChange}
               placeholder="Goals, injuries, focus areas…"
               rows={3}
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors resize-none"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors resize-none"
             />
           </div>
 
@@ -129,7 +131,7 @@ function Field({ label, name, value, onChange, placeholder, type = 'text' }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
       />
     </div>
   )
@@ -145,8 +147,8 @@ function ClientCard({ client, onClick }) {
   return (
     <button onClick={onClick} className="card w-full flex items-start gap-3 text-left active:scale-[0.99] transition-transform">
       {/* Avatar */}
-      <div className="w-11 h-11 rounded-full bg-gold/20 flex items-center justify-center flex-none mt-0.5">
-        <span className="text-gold text-sm font-bold">
+      <div className="w-11 h-11 rounded-full flex items-center justify-center flex-none mt-0.5" style={{ backgroundColor: 'rgba(91,138,138,0.2)' }}>
+        <span className="text-sm font-bold" style={{ color: '#F0EFED' }}>
           {initials(client.first_name, client.last_name)}
         </span>
       </div>
@@ -242,17 +244,23 @@ export default function Clients() {
   return (
     <div className="page-container">
       <div className="px-4 pt-8 pb-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-white">Clients</h1>
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-9 h-9 rounded-full bg-gold flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+        {/* Header row */}
+        <div className="flex items-center mb-2" style={{ paddingTop: '16px', paddingBottom: '4px', position: 'relative' }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
+            <img src={savantSymbol} alt="Savant" style={{ height: '52px', width: 'auto', display: 'block', mixBlendMode: 'screen' }} />
           </button>
+          <h1 className="text-2xl font-bold text-white" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>Clients</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-9 h-9 flex items-center justify-center active:scale-90 transition-transform" style={{ background: 'rgba(91,138,138,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(91,138,138,0.4)', borderRadius: '50%' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#62F5EC" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <HamburgerMenu />
+          </div>
         </div>
         <div className="h-px bg-border mb-4" />
 
@@ -266,14 +274,14 @@ export default function Clients() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search clients…"
-            className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+            className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
           />
         </div>
 
         {/* States */}
         {fetching && !clients.length && (
           <div className="flex justify-center py-16">
-            <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: '#F0EFED', borderTopColor: 'transparent' }} />
           </div>
         )}
 
@@ -293,8 +301,8 @@ export default function Clients() {
               <p className="text-sm text-gray-400">No clients match "<span className="text-white">{search}</span>"</p>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-3">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4CFC7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgba(91,138,138,0.1)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0EFED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />

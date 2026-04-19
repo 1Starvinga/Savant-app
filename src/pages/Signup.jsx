@@ -50,12 +50,12 @@ export default function Signup() {
       <div className="min-h-full bg-background flex flex-col justify-center px-6 py-12">
         <div className="mb-10 text-center">
           <p className="text-xs tracking-[0.3em] text-gray-500 uppercase mb-1">The</p>
-          <h1 className="font-display text-4xl text-gold tracking-wide">SAVANT</h1>
+          <h1 className="font-display text-4xl tracking-wide" style={{ color: '#F0EFED' }}>SAVANT</h1>
           <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mt-1">Stretch Method</p>
         </div>
         <div className="card max-w-sm w-full mx-auto text-center">
-          <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4CFC7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(91,138,138,0.1)' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0EFED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
               <polyline points="22,6 12,13 2,6" />
             </svg>
@@ -79,7 +79,7 @@ export default function Signup() {
       {/* Logo / Wordmark */}
       <div className="mb-10 text-center">
         <p className="text-xs tracking-[0.3em] text-gray-500 uppercase mb-1">The</p>
-        <h1 className="text-4xl font-bold tracking-tight text-gold">SAVANT</h1>
+        <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#F0EFED' }}>SAVANT</h1>
         <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mt-1">Stretch Method</p>
       </div>
 
@@ -100,7 +100,7 @@ export default function Signup() {
               value={form.fullName}
               onChange={handleChange}
               placeholder="Jane Smith"
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
             />
           </div>
 
@@ -116,7 +116,7 @@ export default function Signup() {
               value={form.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
             />
           </div>
 
@@ -132,13 +132,13 @@ export default function Signup() {
               value={form.password}
               onChange={handleChange}
               placeholder="Min. 6 characters"
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors"
             />
           </div>
 
           <p className="text-[11px] text-gray-500 leading-relaxed">
             By signing up you're joining as a{' '}
-            <span className="text-gold">Savant Practitioner</span>.
+            <span style={{ color: '#F0EFED' }}>Savant Practitioner</span>.
           </p>
 
           {error && (
@@ -158,7 +158,7 @@ export default function Signup() {
       {/* Footer link */}
       <p className="text-center text-sm text-gray-500 mt-6">
         Already have an account?{' '}
-        <Link to="/login" className="text-gold font-medium">
+        <Link to="/login" className="font-medium" style={{ color: '#F0EFED' }}>
           Sign in
         </Link>
       </p>

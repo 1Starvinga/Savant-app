@@ -401,57 +401,172 @@ function AssessmentSummaryView({ assessment, client, onBack }) {
   )
 }
 
-// ─── Assessment Row ─────────────────────────────────────────────
+// ─── Latest Assessment Section ──────────────────────────────────
 
-function AssessmentRow({ assessment, onSelect }) {
-  const isComplete  = assessment.status === 'complete'
-  const date        = formatDate(assessment.created_at)
+function LatestAssessmentSection({ assessment, onView, onStart }) {
+  return (
+    <section className="mb-6">
+      <h2 className="text-base font-semibold text-white mb-3">Latest Assessment</h2>
 
-  // Quick restriction count from findings_data or findings
-  const raw      = assessment.findings_data ?? assessment.findings
-  const findings = normalizeFindings(raw)
-  let restrictionCount = 0
-  stretchLibrary.forEach(s => {
+      {!assessment ? (
+        <div className="card text-center py-8">
+          <p className="text-sm text-gray-400 mb-4">No assessment on file</p>
+          <button onClick={onStart} className="btn-gold">
+            Start First Assessment
+          </button>
+        </div>
+      ) : (
+        <AssessmentSummaryCard assessment={assessment} onView={() => onView(assessment)} />
+      )}
+    </section>
+  )
+}
+
+function AssessmentSummaryCard({ assessment, onView }) {
+  const findings = normalizeFindings(assessment.findings_data ?? assessment.findings)
+
+  const restrictions = []
+  let totalAssessed = 0
+  let painCount = 0
+
+  stretchLibrary.forEach(stretch => {
+    const f = findings[stretch.id]
     ;['left', 'right'].forEach(side => {
-      const e = findings[s.id][side]
-      if (e.rom === 'restricted' || e.rom === 'severely_restricted') restrictionCount++
+      const entry = f[side]
+      if (entry.rom !== null) {
+        totalAssessed++
+        if (entry.rom === 'restricted' || entry.rom === 'severely_restricted') {
+          restrictions.push({ stretch, side, entry })
+        }
+        if (entry.painPresent === true) painCount++
+      }
     })
   })
 
-  return (
-    <button
-      onClick={() => onSelect(assessment)}
-      className="card w-full flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
-    >
-      {/* Status dot */}
-      <div
-        className={`w-2.5 h-2.5 rounded-full flex-none ${isComplete ? 'bg-emerald-500' : 'animate-pulse'}`}
-        style={!isComplete ? { backgroundColor: '#F0EFED' } : {}}
-      />
+  const topRestrictions = restrictions
+    .sort((a, b) => (a.entry.rom === 'severely_restricted' ? -1 : 1))
+    .slice(0, 3)
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-white">{date}</p>
-          <span
-            className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${isComplete ? 'bg-emerald-500/15 text-emerald-400' : ''}`}
-            style={!isComplete ? { backgroundColor: 'rgba(91,138,138,0.15)', color: '#F0EFED' } : {}}
-          >
-            {isComplete ? 'Complete' : 'In Progress'}
-          </span>
+  return (
+    <div className="card">
+      {/* Date */}
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-3">
+        {formatDate(assessment.created_at)}
+      </p>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 text-center mb-4">
+        <div>
+          <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{totalAssessed}</p>
+          <p className="text-[10px] text-gray-500 mt-0.5">Sides Assessed</p>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {isComplete
-            ? restrictionCount > 0
-              ? `${restrictionCount} restriction${restrictionCount !== 1 ? 's' : ''} found`
-              : 'No restrictions'
-            : `Paused at step ${(assessment.current_stretch_index ?? 0) + 1} of 47`}
-        </p>
+        <div>
+          <p className="text-xl font-bold text-red-400">{restrictions.length}</p>
+          <p className="text-[10px] text-gray-500 mt-0.5">Restrictions</p>
+        </div>
+        <div>
+          <p className="text-xl font-bold" style={{ color: '#F0EFED' }}>{painCount}</p>
+          <p className="text-[10px] text-gray-500 mt-0.5">Pain Sites</p>
+        </div>
       </div>
 
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
+      {/* Top restrictions preview */}
+      {topRestrictions.length > 0 && (
+        <div className="pt-4 border-t border-border space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+            Key Findings
+          </p>
+          {topRestrictions.map(({ stretch, side, entry }) => (
+            <div key={`${stretch.id}-${side}`} className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-gray-300">{stretch.name}</p>
+              <span className="text-[10px] text-gray-500 capitalize">{side}</span>
+              <span
+                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${romBadgeClass(entry.rom)}`}
+                style={romBadgeStyle(entry.rom)}
+              >
+                {ROM_LABEL[entry.rom]}
+              </span>
+              {entry.painPresent && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">
+                  Pain
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Assessment summary text */}
+      {assessment.summary && (
+        <p className="text-xs text-gray-400 leading-relaxed mt-4 pt-4 border-t border-border">
+          {assessment.summary}
+        </p>
+      )}
+
+      {/* View button */}
+      <button onClick={onView} className="btn-gold w-full mt-4">
+        View Full Assessment
+      </button>
+    </div>
+  )
+}
+
+// ─── Session Notes Section ──────────────────────────────────────
+
+function SessionNotesSection({ notes }) {
+  const [latest, ...previous] = notes
+
+  return (
+    <section>
+      <h2 className="text-base font-semibold text-white mb-3">Session Notes</h2>
+
+      {notes.length === 0 ? (
+        <div className="card text-center py-8">
+          <p className="text-sm text-gray-400">No session notes yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <SessionNoteCard note={latest} featured />
+          {previous.length > 0 && (
+            <div
+              className="space-y-2 overflow-y-auto pr-1"
+              style={{ maxHeight: '420px' }}
+            >
+              {previous.map(n => (
+                <SessionNoteCard key={n.id} note={n} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function SessionNoteCard({ note, featured = false }) {
+  return (
+    <div className="card" style={featured ? { padding: '20px' } : { padding: '14px 16px' }}>
+      <p className={`font-semibold uppercase tracking-widest text-gray-500 mb-2 ${featured ? 'text-[11px]' : 'text-[10px]'}`}>
+        {formatDate(note.session_date ?? note.created_at)}
+        {featured && <span className="ml-2 text-emerald-400 normal-case tracking-normal">• Most recent</span>}
+      </p>
+      {note.intake_note && (
+        <p className={`text-gray-300 leading-relaxed ${featured ? 'text-sm' : 'text-xs'}`}>
+          {note.intake_note}
+        </p>
+      )}
+      {note.end_note && (
+        <div className={note.intake_note ? 'mt-3 pt-3 border-t border-border' : ''}>
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 mb-1">Assessment Findings</p>
+          <p className={`text-gray-400 leading-relaxed ${featured ? 'text-sm' : 'text-xs'}`}>
+            {note.end_note}
+          </p>
+        </div>
+      )}
+      {!note.intake_note && !note.end_note && (
+        <p className="text-xs text-gray-600 italic">Empty note</p>
+      )}
+    </div>
   )
 }
 
@@ -464,6 +579,7 @@ export default function ClientProfile() {
 
   const [client, setClient]                   = useState(null)
   const [assessments, setAssessments]         = useState([])
+  const [sessionNotes, setSessionNotes]       = useState([])
   const [loading, setLoading]                 = useState(true)
   const [showEdit, setShowEdit]               = useState(false)
   const [selectedAssessment, setSelectedAssessment] = useState(null)
@@ -477,9 +593,15 @@ export default function ClientProfile() {
         .select('id, status, summary, created_at, current_stretch_index, findings_data, findings')
         .eq('client_id', id)
         .order('created_at', { ascending: false }),
-    ]).then(([{ data: c, error: cErr }, { data: a, error: aErr }]) => {
+      supabase
+        .from('session_notes')
+        .select('id, intake_note, end_note, session_date, created_at')
+        .eq('client_id', id)
+        .order('created_at', { ascending: false }),
+    ]).then(([{ data: c, error: cErr }, { data: a, error: aErr }, { data: n, error: nErr }]) => {
       if (!cErr && c) setClient(c)
       if (!aErr)      setAssessments(a ?? [])
+      if (!nErr)      setSessionNotes(n ?? [])
       setLoading(false)
     })
   }, [id])
@@ -489,16 +611,12 @@ export default function ClientProfile() {
     setShowEdit(false)
   }
 
-  const hasCompleteSessions = assessments.some(a => a.status === 'complete')
+  const latestCompleteAssessment = assessments.find(a => a.status === 'complete') ?? null
 
   function startNewAssessment() {
     navigate('/diagnostic', {
       state: { preselectedClient: client },
     })
-  }
-
-  function startNewSession() {
-    navigate(`/clients/${client.id}/session`)
   }
 
   if (loading) {
@@ -620,46 +738,15 @@ export default function ClientProfile() {
           )}
         </div>
 
-        {/* Session action buttons */}
-        {hasCompleteSessions ? (
-          <div className="flex flex-col gap-2 mb-6">
-            <button onClick={startNewSession} className="btn-gold w-full">
-              New Session
-            </button>
-            <button onClick={startNewAssessment} className="btn-outline w-full">
-              Start New Assessment
-            </button>
-          </div>
-        ) : (
-          <button onClick={startNewAssessment} className="btn-gold w-full mb-6">
-            First Assessment
-          </button>
-        )}
+        {/* ─── Latest Assessment ─────────────────────────────────── */}
+        <LatestAssessmentSection
+          assessment={latestCompleteAssessment}
+          onView={setSelectedAssessment}
+          onStart={startNewAssessment}
+        />
 
-        {/* Assessments section */}
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-white">Assessments</h2>
-          <span className="text-xs text-gray-600">{assessments.length} total</span>
-        </div>
-
-        {assessments.length === 0 ? (
-          <div className="card text-center py-10">
-            <p className="text-sm text-gray-400">No assessments yet.</p>
-            <p className="text-xs text-gray-600 mt-1">
-              Tap "Start New Assessment" to begin.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {assessments.map(a => (
-              <AssessmentRow
-                key={a.id}
-                assessment={a}
-                onSelect={setSelectedAssessment}
-              />
-            ))}
-          </div>
-        )}
+        {/* ─── Session Notes ─────────────────────────────────────── */}
+        <SessionNotesSection notes={sessionNotes} />
 
       </div>
 

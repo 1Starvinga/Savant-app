@@ -15,14 +15,16 @@ const PHASES = [
   { id: 6, label: 'Prone — Left Arm',   position: 'Prone',  side: 'left',  stretches: [13,14,15] },
   { id: 7, label: 'Supine — Right Arm', position: 'Supine', side: 'right', stretches: [18,16,17,19,20,21] },
   { id: 8, label: 'Supine — Left Arm',  position: 'Supine', side: 'left',  stretches: [18,16,17,19,20,21] },
-  { id: 9, label: 'Finish',             position: 'Supine', side: null,    stretches: [22,23,24,7,8] },
+  { id: 9,  label: 'Finish — Right Side', position: 'Supine', side: 'right', stretches: [22,23,24] },
+  { id: 10, label: 'Finish — Left Side',  position: 'Supine', side: 'left',  stretches: [22,23,24] },
+  { id: 11, label: 'Finish',              position: 'Supine', side: null,    stretches: [7,8] },
 ]
 
 const TRANSITION_AFTER = {
   2: { instruction: 'Have client flip to prone position',      nextLabel: 'Prone — Right Leg' },
   4: { instruction: 'Move to upper body — client stays prone', nextLabel: 'Prone — Right Arm' },
   6: { instruction: 'Have client flip to supine',              nextLabel: 'Supine — Right Arm' },
-  8: { instruction: 'Final stretches — client stays supine',   nextLabel: 'Finish' },
+  8: { instruction: 'Final stretches — client stays supine',   nextLabel: 'Finish — Right Side' },
 }
 
 const SEQUENCE = (() => {

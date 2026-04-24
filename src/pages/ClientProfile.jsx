@@ -150,12 +150,12 @@ function EditClientModal({ client, onClose, onSaved }) {
           <Field label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="jane@example.com" />
           <Field label="Phone" name="phone" type="tel"   value={form.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" />
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Notes</label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Client Background</label>
             <textarea
               name="notes"
               value={form.notes}
               onChange={handleChange}
-              placeholder="Goals, injuries, focus areas…"
+              placeholder="Occupation, injuries, conditions, goals…"
               rows={3}
               className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:outline-none transition-colors resize-none"
             />
@@ -729,10 +729,10 @@ export default function ClientProfile() {
             )}
           </div>
 
-          {/* Notes */}
+          {/* Client Background */}
           {client.notes && (
             <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#F0EFED' }}>Notes</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#F0EFED' }}>Client Background</p>
               <p className="text-sm text-gray-400 leading-relaxed">{client.notes}</p>
             </div>
           )}
